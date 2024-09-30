@@ -3,27 +3,27 @@ import os
 
 def read_files_in_folder(folder_path):
     """
-    Read all files in the specified folder and return their contents.
+    Read all files in the specified folder and its subfolders, and return their contents.
 
     Args:
     folder_path (str): Path to the folder containing the files.
 
     Returns:
-    dict: A dictionary where keys are file names and values are file contents.
+    dict: A dictionary where keys are relative file paths and values are file contents.
     """
     file_contents = {}
 
     try:
-        for filename in os.listdir(folder_path):
-            file_path = os.path.join(folder_path, filename)
-
-            if os.path.isfile(file_path):
+        for root, _, files in os.walk(folder_path):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                relative_path = os.path.relpath(file_path, folder_path)
                 try:
                     with open(file_path, "r", encoding="utf-8") as file:
                         content = file.read()
-                    file_contents[filename] = content
+                    file_contents[relative_path] = content
                 except Exception as e:
-                    print(f"Error reading file {filename}: {str(e)}")
+                    print(f"Error reading file {relative_path}: {str(e)}")
 
     except Exception as e:
         print(f"Error accessing folder {folder_path}: {str(e)}")
@@ -32,10 +32,10 @@ def read_files_in_folder(folder_path):
 
 
 if __name__ == "__main__":
-    folder_to_read = "path/to/your/folder"
+    folder_to_read = "../tictactoe/src/"
     files_content = read_files_in_folder(folder_to_read)
 
-    for filename, content in files_content.items():
-        print(f"File: {filename}")
-        print(f"Content:\n{content}")
+    for filepath, content in files_content.items():
+        print(f"File: {filepath}")
+        print(f"Content:\n{content[:100]}...")  # Print first 100 characters
         print("-" * 50)
