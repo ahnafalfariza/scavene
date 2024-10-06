@@ -11,18 +11,27 @@ The Smart Contract Auditor is a tool designed to automatically audit Rust-based 
 ## Installation
 
 1. Clone this repository:
-   ```
+   ```sh
    git clone https://github.com/yourusername/smart-contract-auditor.git
    cd smart-contract-auditor
    ```
 
-2. Install the required dependencies:
+2. Create and activate a virtual environment:
+   ```sh
+   python3 -m venv venv
+   source venv/bin/activate  
+   
+   # On Windows, use 
+   `venv\Scripts\activate`
    ```
+
+3. Install the required dependencies:
+   ```sh
    pip install -r requirements.txt
    ```
 
-3. Set up your API keys as environment variables:
-   ```
+4. Set up your API keys as environment variables:
+   ```sh
    export OPENAI_API_KEY='your-openai-api-key-here'
    export ANTHROPIC_API_KEY='your-anthropic-api-key-here'
    ```
@@ -31,7 +40,7 @@ The Smart Contract Auditor is a tool designed to automatically audit Rust-based 
 
 To use the Smart Contract Auditor, run the `main.py` script with the following syntax:
 
-```
+```sh
 python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE]
 ```
 
@@ -41,7 +50,7 @@ python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE]
 - `--output`: Output file name for audit results (optional, default: audit_results_<timestamp>.json)
 
 Example:
-```
+```sh
 python main.py /path/to/your/rust/files --model claude-3.5-sonnet --output my_audit_results.json
 ```
 
