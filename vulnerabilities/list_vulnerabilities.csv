@@ -1,0 +1,335 @@
+title,description,severity,detector_id,sample_code
+Use of incorrect json type,"Don't use type `i64`, `i128`, `u64`, or `u128` as the parameters or return values of public interfaces (public functions without `#[private]` macro in a `#[near_bindgen]` struct). This is because the largest integer that json can support is 2^53-1. Type `I64`, `I128`, `U64`, and `U128` in Near SDK are recommended for developers.",High,incorrect-json-type,"pub struct ContractMetadata {
+    pub version: String,
+    pub owner: AccountId,
+    pub guardians: Vec<AccountId>,
+    pub pool_count: u64,  // should use `U64`
+    pub state: RunningState,
+    pub exchange_fee: u32,
+    pub referral_fee: u32,
+}
+
+#[near_bindgen]
+impl Contract {
+    pub fn metadata(&self) -> ContractMetadata {  // `u64` in return type
+        // ...
+    }
+}"
+Lack of check for self-transfer,"Before transferring tokens to the receiver, the contract should check whether the receiver is the sender itself. Otherwise, attackers may mint infinite tokens by abusing this vulnerability.",High,self-transfer,"fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>) {
+    // ...
+    let sender_id = env::predecessor_account_id();
+    let amount: Balance = amount.into();
+    self.internal_transfer(&sender_id, &receiver_id, amount, memo);
+}
+
+pub fn internal_transfer(&mut self, sender_id: &AccountId, receiver_id: &AccountId, amount: Balance, memo: Option<String>) {
+    require!(sender_id != receiver_id, ""Sender and receiver should be different"");
+    // ...
+}"
+Lack of check for prepaid gas in `ft_transfer_call`,"In `ft_transfer_call`, the contract should check whether the prepaid_gas is enough for `ft_on_transfer` and `ft_resolve_transfer` before launching a cross-contract invocation.",Low,prepaid-gas,"fn ft_transfer_call(
+    &mut self,
+    receiver_id: AccountId,
+    amount: U128,
+    memo: Option<String>,
+    msg: String,
+) -> PromiseOrValue<U128> {
+    require!(env::prepaid_gas() > GAS_FOR_FT_TRANSFER_CALL, ""More gas is required"");
+    // ...
+}"
+Transfer action,Find all transfer actions. This detector can help to locate all the transfer actions for both native tokens and NEP 141 tokens.,Info,transfer,"// Promise::transfer
+Promise::new(env::predecessor_account_id()).transfer(amount);
+
+// NPE141 ft_transfer
+ext_fungible_token::ft_transfer(
+    sender_id.clone(),
+    U128(amount),
+    None,
+    token_id,
+    1,
+    GAS_FOR_FT_TRANSFER,
+)
+.then(ext_self::exchange_callback_post_withdraw(
+    token_id.clone(),
+    sender_id.clone(),
+    U128(amount),
+    &env::current_account_id(),
+    0,
+    GAS_FOR_RESOLVE_TRANSFER,
+))"
+Changes to collections are not saved,"NEAR SDK provides some map collections which can store key-value mappings. You can use `get` to get a value by its key and insert or overwrite the value by calling `insert` with a specified key. The collections use borsh to serialize and deserialize, when you want to make some changes to a collection, you need to `get` an existing value and make changes to it, then `insert` it into the collection again. Without the `insert` function, the changes will not be saved to the contract.",High,unsaved-changes,"#[allow(unused)]
+pub fn modify(&mut self, change: I128) {
+    let mut balance = self
+        .accounts
+        .get(&env::predecessor_account_id())
+        .unwrap_or_else(|| env::panic_str(""Account is not registered""));
+
+    balance = balance
+        .checked_add(change.0)
+        .unwrap_or_else(|| env::panic_str(""Overflow""));
+
+    // self.accounts
+    //     .insert(&env::predecessor_account_id(), &balance);
+}"
+Check the integrity of NEP interfaces,"NEPs stand for Near Enhancement Proposals, which are some changes to the NEAR protocol specification and standards. Currently, there are NEPs for FT, NFT, MT and storage, listed in a table.",Medium,nep${id}-interface,"./rustle ~/Git/near-sdk-rs/near-contract-standards -t ~/Git/near-sdk-rs -d nep141-interface  # Fungible Token Standard
+./rustle ~/Git/near-sdk-rs/near-contract-standards -t ~/Git/near-sdk-rs -d nep145-interface  # Storage Management
+./rustle ~/Git/near-sdk-rs/near-contract-standards -t ~/Git/near-sdk-rs -d nep171-interface  # Non Fungible Token Standard"
+Improper rounding without ceil or floor specified,Find if there is rounding used in arithmetic operations. Rounding without specifying direction may be exploited in DeFi.,Medium,round,let fee = (amount * fee_rate).round();
+Promise result,"Find all uses of `env::promise_result`, which provides the result of promise execution. This detector helps to quickly locate the logic of handling promise results.",Info,promise-result,"let cross_call_result = match env::promise_result(0) {
+    PromiseResult::Successful(result) => result,
+    _ => env::panic(ERR124_CROSS_CALL_FAILED.as_bytes()),
+};"
+Lack of check approval id during NFT transfer,"In the design of the NEP-178, the owner of the NFT can approve or revoke approvals by using the specified interfaces (ie, `nft_approve`, `nft_revoke` and `nft_revoke_all`). An owner check should be implemented for these interfaces to make sure they are callable to the owner only, otherwise, anyone can modify the approvals of the NFT.",High,nft-owner-check,"let owner_id = expect_token_found(self.owner_by_id.get(&token_id));
+let predecessor_account_id = env::predecessor_account_id();
+
+require!(predecessor_account_id == owner_id, ""Predecessor must be token owner."");"
+Panic in callback may lock the contract,"It's not recommended to use `assert` or `require` or anything that will result in panic in a callback function. In Near, the callback function needs to recover some state changes made by a failed promise. If the callback function panics, the state may not be fully recovered, which results in unexpected results.",Medium,lock-callback,"fn process_order(&mut self, order_id: u32) -> Promise {
+    let receiver = self.get_receiver(order_id);
+    let amount = self.get_amount(order_id);
+    self.delete_order(order_id);
+    ext_contract::do_transfer(receiver, amount).then(ext_self::callback_transfer(order_id))
+}
+
+// ext_self::callback_transfer
+#[private]
+pub fn callback_transfer(&mut self, order_id: u32) {
+    assert!(order_id > 0);
+
+    match env::promise_result(0) {
+        PromiseResult::NotReady => unreachable!(),
+        PromiseResult::Successful(_) => {}
+        PromiseResult::Failed => {
+            self.recover_order(order_id);
+        }
+    };
+}"
+Missing check for the storage fee before trying to unregister the storage,"According to NEP-145, if the owner of an account tries to close the account, he needs to unregister the storage with a zero balance unless the `force` flag is set. So the implementation of NEP-145 should comply with this rule.",Low,unclaimed-storage-fee,"fn storage_unregister(&mut self, force: Option<bool>) -> bool {
+    assert_one_yocto();
+    let account_id = env::predecessor_account_id();
+    let force = force.unwrap_or(false);
+    if let Some(balance) = self.accounts.get(&account_id) {
+        if balance == 0 || force {
+            self.accounts.remove(&account_id);
+            self.total_supply -= balance;
+            Promise::new(account_id.clone()).transfer(self.storage_balance_bounds().min.0 + 1);
+            true
+        } else {
+            env::panic_str(
+                ""Can't unregister the account with the positive balance without force"",
+            )
+        }
+    } else {
+        log!(""The account {} is not registered"", &account_id);
+        false
+    }
+}"
+Unhandled promise's result,"Promise results should always be handled by a callback function or another promise. It is not recommended to leave promises unhandled in contracts. Otherwise, the changed state cannot be rolled back if the promise failed.",High,unhandled-promise,"token.ft_transfer_call(receiver, U128(amount), None, """".to_string());"
+Inconsistent symbols,Symbols with similar but slightly different names may be misused. Such error is hard to find out manually but may result in critical results.,Info,inconsistency,"ext::ft_transfer(
+    receiver_id,
+    U128(amount),
+    None,
+    token_id,
+    1,
+    GAS_FOR_NFT_TRANSFER  // should use GAS_FOR_FT_TRANSFER here
+)"
+Lack of check for storage expansion,"Each time the state grows, it should be ensured that there is enough Balance to cover the expansion.",Low,storage-gas,"let prev_storage = env::storage_usage();
+
+self.banks.insert(&Bank {
+    owner: bank.owner,
+    balance: bank.balance.0,
+});
+
+assert!(
+    env::attached_deposit() > ((env::storage_usage() - prev_storage) as u128 * env::storage_byte_cost()),
+    ""insufficient storage gas""
+);"
+Lack of two-factor authentication,"Privileged functions should check whether one yocto NEAR is attached. This will enable the 2FA in the NEAR wallet for security concerns. This can be implemented in the contract by adding `assert_one_yocto`, which is recommended for all privileged functions.",Medium,yocto-attach,"pub(crate) fn assert_owner(&self) {
+    assert_eq!(
+        env::predecessor_account_id(),
+        self.owner_id,
+        ""{}"", ERR100_NOT_ALLOWED
+    );
+}
+
+#[payable]
+pub fn set_owner(&mut self, owner_id: ValidAccountId) {
+    assert_one_yocto();
+    self.assert_owner();
+    self.owner_id = owner_id.as_ref().clone();
+}"
+Dependency of timestamp,"Timestamp dependency may lead to exploitation since it could be manipulated by miners. For example, in a lottery contract, the jackpot is generated using the timestamp, then the miner may have some way to manipulate the timestamp to get the jackpot.",Info,timestamp,"impl Lottery{
+    fn get_winner(&self) -> u32 {
+        let current_time = env::block_timestamp();
+        let winner_id = self.generate_winner(&current_time);
+
+        winner_id
+    }
+}"
+Complex logic inside a loop,"Find loops containing complex logic, which may result in DoS problems. It's recommended to limit the iteration times to avoid the DoS problem.",Info,complex-loop,"impl User {
+    pub fn complex_calc(&mut self) {
+        // ...
+    }
+}
+
+#[near_bindgen]
+impl Contract {
+    pub fn register_users(&mut self, user: User) {
+        self.users.push(user);
+    }
+
+    pub fn update_all_users(&mut self) {
+        for user in self.users.iter_mut() {
+            user.complex_calc();
+        }
+    }
+}"
+Cross-contract invocations,Find all cross-contract invocations. We provide this detector to help users quickly locate all cross-contract invocations for further analysis.,Info,ext-call,"#[ext_contract(ext_calculator)]
+trait Calculator {
+    fn sum(&self, a: U128, b: U128) -> U128;
+}
+
+#[near_bindgen]
+impl Contract {
+    pub fn sum_a_b(&mut self, a: U128, b: U128) -> Promise {
+        let calculator_account_id: AccountId = ""calc.near"".parse().unwrap();
+        ext_calculator::ext(calculator_account_id).sum(a, b)  // run sum(a, b) on remote
+    }
+}"
+Use of tautology in branch condition,Find simple tautology (`true` or `false` involved in the condition) which makes a branch deterministic.,Low,tautology,"let ok: bool = check_state();
+if true || ok {
+    // ...
+} else {
+    // ...
+}"
+Unsafe math without overflow check,"Enable overflow checks for all arithmetic operations. Otherwise, overflow can occur, resulting in incorrect results. Overflow checks in NEAR contracts can be implemented with two different methods: 1. [Recommended] Turn on the `overflow-checks` in the cargo manifest. In this case, it's okay to use `+`, `-` and `*` for arithmetic operations. 2. Use safe math functions (e.g., `checked_xxx()`) to do arithmetic operations.",High,unsafe-math,let a = b + c;
+Reentrancy,Find functions that are vulnerable to reentrancy attack. Contracts should always change state before making a cross-contract invocation and roll back the changes in the callback function if the cross-contract invocation fails.,High,reentrancy,"#[near_bindgen]
+impl VictimContract {
+    pub fn withdraw(&mut self, amount: u128) -> Promise {
+        assert!(self.attacker_balance >= amount);
+        ext_ft_token::ft_transfer_call(
+            amount.into(),
+            &FT_TOKEN,
+            0,
+            env::prepaid_gas() - GAS_FOR_SINGLE_CALL * 2,
+        ).then(ext_self::ft_resolve_transfer(
+            amount.into(),
+            &env::current_account_id(),
+            0,
+            GAS_FOR_SINGLE_CALL,
+        ))
+    }
+
+    #[private]
+    pub fn ft_resolve_transfer(&mut self, amount: u128) {
+        match env::promise_result(0) {
+            PromiseResult::NotReady => unreachable!(),
+            PromiseResult::Successful(_) => {
+                self.attacker_balance -= amount;
+            }
+            PromiseResult::Failed => {}
+        };
+    }
+}"
+Lack of `#[private]` macro in callback functions,"The callback function should be decorated with `#[private]` to ensure that it can only be invoked by the contract itself. Without this macro, anyone can invoke the callback function, which is against the original design.",High,non-private-callback,"pub fn callback_stake(&mut self) { // this is a callback function
+    // ...
+}"
+Division before multiplication,"Find division before multiplication like `3 / 2 * 6 == 6`, which has a different result compared with `3 * 6 / 2 == 9`. This can result in precision loss. It is suggested to conduct multiplication before division.",Medium,div-before-mul,"let reward_per_session =
+    farm.amount / (farm.end_date - farm.start_date) as u128 * SESSION_INTERVAL as u128;"
+Find all public interfaces,"Public interfaces are functions that can be called by others. Specifically, they are public functions without `#[private]` macro of a `#[near_bindgen]` struct.",Info,public-interface,"#[near_bindgen]
+impl Contract {
+    pub fn withdraw(&mut self, amount: U128) -> Promise {
+        unimplemented!()
+    }
+
+    pub fn check_balance(&self) -> U128 {
+        unimplemented!()
+    }
+
+    #[private]
+    pub fn callback_withdraw(&mut self, amount: U128) {
+        unimplemented!()
+    }
+
+    fn sub_balance(&mut self, amount: u128) {
+        unimplemented!()
+    }
+}"
+Lack of upgrade function,"Contracts may need the upgrade function, Rustle will check if such an interface exists in the contract. Without an upgrade function, the contract cannot be upgraded and contract states cannot be migrated.",Low,upgrade-func,"mod upgrade {
+    use near_sdk::{require, Gas};
+
+    use super::*;
+    use near_sys as sys;
+
+    const GAS_TO_COMPLETE_UPGRADE_CALL: Gas = Gas(Gas::ONE_TERA.0 * 10);
+    const GAS_FOR_GET_CONFIG_CALL: Gas = Gas(Gas::ONE_TERA.0 * 5);
+    const MIN_GAS_FOR_MIGRATE_STATE_CALL: Gas = Gas(Gas::ONE_TERA.0 * 10);
+
+    #[no_mangle]
+    pub extern ""C"" fn upgrade() {
+        // ... (implementation details)
+    }
+}"
+NEP-141 transfer doesn't panic on unregistered receiver accounts,"According to the implementation of NEP-141, a transfer receiver that has not been registered should result in panic. Developers may try to register a new account for the receiver without asking for the storage fee, which may lead to DoS.",Medium,unregistered-receiver,"#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct Contract {
+    accounts: UnorderedMap<AccountId, Balance>,
+    total_supply: Balance,
+}
+
+impl Contract {
+    pub fn internal_unwrap_balance_safe(&self, account_id: &AccountId) -> Balance {
+        self.accounts
+            .get(account_id)
+            .unwrap_or_else(|| env::panic_str(""Account is not registered""))
+    }
+    pub fn internal_unwrap_balance_unsafe(&self, account_id: &AccountId) -> Balance {
+        self.accounts.get(account_id).unwrap_or(0)
+    }
+}"
+Duplicate id uses in collections,Collections in NEAR SDK use function `new` to initialize itself. The argument `prefix` is an identifier for collection. Every collection should have an id different from the id of other collections.,Medium,dup-collection-id,"#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct Contract {
+    orders: UnorderedMap<u16, Order>,
+    users: UnorderedSet<AccountId>,
+}
+
+#[near_bindgen]
+impl Contract {
+    #[init]
+    pub fn new() -> Self {
+        Self {
+            orders: UnorderedMap::new(StorageKey::Orders),
+            users: UnorderedSet::new(StorageKey::Orders), // Should use `StorageKey::Users` here
+        }
+    }
+}"
+Lack of check approval id during NFT transfer,"During an NFT transfer (i.e, `nft_transfer` and `nft_transfer_call`), if the sender of the transfer is not the owner of the NFT, the `approval_id` of the transfer should be checked to make sure the sender has the authority to launch this transfer. Without this check, anyone can transfer an NFT to other accounts without approval.",High,nft-approval-check,"let app_acc_ids =
+    approved_account_ids.as_ref().unwrap_or_else(|| env::panic_str(""Unauthorized""));
+
+let actual_approval_id = app_acc_ids.get(sender_id);
+
+if actual_approval_id.is_none() {
+    env::panic_str(""Sender not approved"");
+}
+
+require!(
+    approval_id.is_none() || actual_approval_id == approval_id.as_ref(),
+    format!(
+        ""The actual approval_id {:?} is different from the given approval_id {:?}"",
+        actual_approval_id, approval_id
+    )
+);"
+Unused return values of non-void function,"The return value of functions should be used. Otherwise, some information may be lost or unchecked.",Low,unused-ret,"#[payable]
+pub fn remove_guardians(&mut self, guardians: Vec<ValidAccountId>) {
+    assert_one_yocto();
+    self.assert_owner();
+    for guardian in guardians {
+        self.guardians.remove(guardian.as_ref());
+    }
+}"
+Improper `#[private]` use in non-callback function,"Macro `#[private]` is usually used in callback function to ensure `current_account_id` equals `predecessor_account_id`. It shouldn't be used in non-callback functions. Otherwise, a public function will be an internal one.",Low,non-callback-private,"#[near_bindgen]
+impl Pool {
+    #[private]
+    pub fn get_tokens(&self) -> &[AccountId] {
+        &self.token_account_ids
+    }
+}"

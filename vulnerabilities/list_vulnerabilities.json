@@ -1,0 +1,212 @@
+[
+    {
+        "title": "Use of incorrect json type",
+        "description": "Don't use type `i64`, `i128`, `u64`, or `u128` as the parameters or return values of public interfaces (public functions without `#[private]` macro in a `#[near_bindgen]` struct). This is because the largest integer that json can support is 2^53-1. Type `I64`, `I128`, `U64`, and `U128` in Near SDK are recommended for developers.",
+        "severity": "High",
+        "detector_id": "incorrect-json-type",
+        "sample_code": "pub struct ContractMetadata {\n    pub version: String,\n    pub owner: AccountId,\n    pub guardians: Vec<AccountId>,\n    pub pool_count: u64,  // should use `U64`\n    pub state: RunningState,\n    pub exchange_fee: u32,\n    pub referral_fee: u32,\n}\n\n#[near_bindgen]\nimpl Contract {\n    pub fn metadata(&self) -> ContractMetadata {  // `u64` in return type\n        // ...\n    }\n}"
+    },
+    {
+        "title": "Lack of check for self-transfer",
+        "description": "Before transferring tokens to the receiver, the contract should check whether the receiver is the sender itself. Otherwise, attackers may mint infinite tokens by abusing this vulnerability.",
+        "severity": "High",
+        "detector_id": "self-transfer",
+        "sample_code": "fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>) {\n    // ...\n    let sender_id = env::predecessor_account_id();\n    let amount: Balance = amount.into();\n    self.internal_transfer(&sender_id, &receiver_id, amount, memo);\n}\n\npub fn internal_transfer(&mut self, sender_id: &AccountId, receiver_id: &AccountId, amount: Balance, memo: Option<String>) {\n    require!(sender_id != receiver_id, \"Sender and receiver should be different\");\n    // ...\n}"
+    },
+    {
+        "title": "Lack of check for prepaid gas in `ft_transfer_call`",
+        "description": "In `ft_transfer_call`, the contract should check whether the prepaid_gas is enough for `ft_on_transfer` and `ft_resolve_transfer` before launching a cross-contract invocation.",
+        "severity": "Low",
+        "detector_id": "prepaid-gas",
+        "sample_code": "fn ft_transfer_call(\n    &mut self,\n    receiver_id: AccountId,\n    amount: U128,\n    memo: Option<String>,\n    msg: String,\n) -> PromiseOrValue<U128> {\n    require!(env::prepaid_gas() > GAS_FOR_FT_TRANSFER_CALL, \"More gas is required\");\n    // ...\n}"
+    },
+    {
+        "title": "Transfer action",
+        "description": "Find all transfer actions. This detector can help to locate all the transfer actions for both native tokens and NEP 141 tokens.",
+        "severity": "Info",
+        "detector_id": "transfer",
+        "sample_code": "// Promise::transfer\nPromise::new(env::predecessor_account_id()).transfer(amount);\n\n// NPE141 ft_transfer\next_fungible_token::ft_transfer(\n    sender_id.clone(),\n    U128(amount),\n    None,\n    token_id,\n    1,\n    GAS_FOR_FT_TRANSFER,\n)\n.then(ext_self::exchange_callback_post_withdraw(\n    token_id.clone(),\n    sender_id.clone(),\n    U128(amount),\n    &env::current_account_id(),\n    0,\n    GAS_FOR_RESOLVE_TRANSFER,\n))"
+    },
+    {
+        "title": "Changes to collections are not saved",
+        "description": "NEAR SDK provides some map collections which can store key-value mappings. You can use `get` to get a value by its key and insert or overwrite the value by calling `insert` with a specified key. The collections use borsh to serialize and deserialize, when you want to make some changes to a collection, you need to `get` an existing value and make changes to it, then `insert` it into the collection again. Without the `insert` function, the changes will not be saved to the contract.",
+        "severity": "High",
+        "detector_id": "unsaved-changes",
+        "sample_code": "#[allow(unused)]\npub fn modify(&mut self, change: I128) {\n    let mut balance = self\n        .accounts\n        .get(&env::predecessor_account_id())\n        .unwrap_or_else(|| env::panic_str(\"Account is not registered\"));\n\n    balance = balance\n        .checked_add(change.0)\n        .unwrap_or_else(|| env::panic_str(\"Overflow\"));\n\n    // self.accounts\n    //     .insert(&env::predecessor_account_id(), &balance);\n}"
+    },
+    {
+        "title": "Check the integrity of NEP interfaces",
+        "description": "NEPs stand for Near Enhancement Proposals, which are some changes to the NEAR protocol specification and standards. Currently, there are NEPs for FT, NFT, MT and storage, listed in a table.",
+        "severity": "Medium",
+        "detector_id": "nep${id}-interface",
+        "sample_code": "./rustle ~/Git/near-sdk-rs/near-contract-standards -t ~/Git/near-sdk-rs -d nep141-interface  # Fungible Token Standard\n./rustle ~/Git/near-sdk-rs/near-contract-standards -t ~/Git/near-sdk-rs -d nep145-interface  # Storage Management\n./rustle ~/Git/near-sdk-rs/near-contract-standards -t ~/Git/near-sdk-rs -d nep171-interface  # Non Fungible Token Standard"
+    },
+    {
+        "title": "Improper rounding without ceil or floor specified",
+        "description": "Find if there is rounding used in arithmetic operations. Rounding without specifying direction may be exploited in DeFi.",
+        "severity": "Medium",
+        "detector_id": "round",
+        "sample_code": "let fee = (amount * fee_rate).round();"
+    },
+    {
+        "title": "Promise result",
+        "description": "Find all uses of `env::promise_result`, which provides the result of promise execution. This detector helps to quickly locate the logic of handling promise results.",
+        "severity": "Info",
+        "detector_id": "promise-result",
+        "sample_code": "let cross_call_result = match env::promise_result(0) {\n    PromiseResult::Successful(result) => result,\n    _ => env::panic(ERR124_CROSS_CALL_FAILED.as_bytes()),\n};"
+    },
+    {
+        "title": "Lack of check approval id during NFT transfer",
+        "description": "In the design of the NEP-178, the owner of the NFT can approve or revoke approvals by using the specified interfaces (ie, `nft_approve`, `nft_revoke` and `nft_revoke_all`). An owner check should be implemented for these interfaces to make sure they are callable to the owner only, otherwise, anyone can modify the approvals of the NFT.",
+        "severity": "High",
+        "detector_id": "nft-owner-check",
+        "sample_code": "let owner_id = expect_token_found(self.owner_by_id.get(&token_id));\nlet predecessor_account_id = env::predecessor_account_id();\n\nrequire!(predecessor_account_id == owner_id, \"Predecessor must be token owner.\");"
+    },
+    {
+        "title": "Panic in callback may lock the contract",
+        "description": "It's not recommended to use `assert` or `require` or anything that will result in panic in a callback function. In Near, the callback function needs to recover some state changes made by a failed promise. If the callback function panics, the state may not be fully recovered, which results in unexpected results.",
+        "severity": "Medium",
+        "detector_id": "lock-callback",
+        "sample_code": "fn process_order(&mut self, order_id: u32) -> Promise {\n    let receiver = self.get_receiver(order_id);\n    let amount = self.get_amount(order_id);\n    self.delete_order(order_id);\n    ext_contract::do_transfer(receiver, amount).then(ext_self::callback_transfer(order_id))\n}\n\n// ext_self::callback_transfer\n#[private]\npub fn callback_transfer(&mut self, order_id: u32) {\n    assert!(order_id > 0);\n\n    match env::promise_result(0) {\n        PromiseResult::NotReady => unreachable!(),\n        PromiseResult::Successful(_) => {}\n        PromiseResult::Failed => {\n            self.recover_order(order_id);\n        }\n    };\n}"
+    },
+    {
+        "title": "Missing check for the storage fee before trying to unregister the storage",
+        "description": "According to NEP-145, if the owner of an account tries to close the account, he needs to unregister the storage with a zero balance unless the `force` flag is set. So the implementation of NEP-145 should comply with this rule.",
+        "severity": "Low",
+        "detector_id": "unclaimed-storage-fee",
+        "sample_code": "fn storage_unregister(&mut self, force: Option<bool>) -> bool {\n    assert_one_yocto();\n    let account_id = env::predecessor_account_id();\n    let force = force.unwrap_or(false);\n    if let Some(balance) = self.accounts.get(&account_id) {\n        if balance == 0 || force {\n            self.accounts.remove(&account_id);\n            self.total_supply -= balance;\n            Promise::new(account_id.clone()).transfer(self.storage_balance_bounds().min.0 + 1);\n            true\n        } else {\n            env::panic_str(\n                \"Can't unregister the account with the positive balance without force\",\n            )\n        }\n    } else {\n        log!(\"The account {} is not registered\", &account_id);\n        false\n    }\n}"
+    },
+    {
+        "title": "Unhandled promise's result",
+        "description": "Promise results should always be handled by a callback function or another promise. It is not recommended to leave promises unhandled in contracts. Otherwise, the changed state cannot be rolled back if the promise failed.",
+        "severity": "High",
+        "detector_id": "unhandled-promise",
+        "sample_code": "token.ft_transfer_call(receiver, U128(amount), None, \"\".to_string());"
+    },
+    {
+        "title": "Inconsistent symbols",
+        "description": "Symbols with similar but slightly different names may be misused. Such error is hard to find out manually but may result in critical results.",
+        "severity": "Info",
+        "detector_id": "inconsistency",
+        "sample_code": "ext::ft_transfer(\n    receiver_id,\n    U128(amount),\n    None,\n    token_id,\n    1,\n    GAS_FOR_NFT_TRANSFER  // should use GAS_FOR_FT_TRANSFER here\n)"
+    },
+    {
+        "title": "Lack of check for storage expansion",
+        "description": "Each time the state grows, it should be ensured that there is enough Balance to cover the expansion.",
+        "severity": "Low",
+        "detector_id": "storage-gas",
+        "sample_code": "let prev_storage = env::storage_usage();\n\nself.banks.insert(&Bank {\n    owner: bank.owner,\n    balance: bank.balance.0,\n});\n\nassert!(\n    env::attached_deposit() > ((env::storage_usage() - prev_storage) as u128 * env::storage_byte_cost()),\n    \"insufficient storage gas\"\n);"
+    },
+    {
+        "title": "Lack of two-factor authentication",
+        "description": "Privileged functions should check whether one yocto NEAR is attached. This will enable the 2FA in the NEAR wallet for security concerns. This can be implemented in the contract by adding `assert_one_yocto`, which is recommended for all privileged functions.",
+        "severity": "Medium",
+        "detector_id": "yocto-attach",
+        "sample_code": "pub(crate) fn assert_owner(&self) {\n    assert_eq!(\n        env::predecessor_account_id(),\n        self.owner_id,\n        \"{}\", ERR100_NOT_ALLOWED\n    );\n}\n\n#[payable]\npub fn set_owner(&mut self, owner_id: ValidAccountId) {\n    assert_one_yocto();\n    self.assert_owner();\n    self.owner_id = owner_id.as_ref().clone();\n}"
+    },
+    {
+        "title": "Dependency of timestamp",
+        "description": "Timestamp dependency may lead to exploitation since it could be manipulated by miners. For example, in a lottery contract, the jackpot is generated using the timestamp, then the miner may have some way to manipulate the timestamp to get the jackpot.",
+        "severity": "Info",
+        "detector_id": "timestamp",
+        "sample_code": "impl Lottery{\n    fn get_winner(&self) -> u32 {\n        let current_time = env::block_timestamp();\n        let winner_id = self.generate_winner(&current_time);\n\n        winner_id\n    }\n}"
+    },
+    {
+        "title": "Complex logic inside a loop",
+        "description": "Find loops containing complex logic, which may result in DoS problems. It's recommended to limit the iteration times to avoid the DoS problem.",
+        "severity": "Info",
+        "detector_id": "complex-loop",
+        "sample_code": "impl User {\n    pub fn complex_calc(&mut self) {\n        // ...\n    }\n}\n\n#[near_bindgen]\nimpl Contract {\n    pub fn register_users(&mut self, user: User) {\n        self.users.push(user);\n    }\n\n    pub fn update_all_users(&mut self) {\n        for user in self.users.iter_mut() {\n            user.complex_calc();\n        }\n    }\n}"
+    },
+    {
+        "title": "Cross-contract invocations",
+        "description": "Find all cross-contract invocations. We provide this detector to help users quickly locate all cross-contract invocations for further analysis.",
+        "severity": "Info",
+        "detector_id": "ext-call",
+        "sample_code": "#[ext_contract(ext_calculator)]\ntrait Calculator {\n    fn sum(&self, a: U128, b: U128) -> U128;\n}\n\n#[near_bindgen]\nimpl Contract {\n    pub fn sum_a_b(&mut self, a: U128, b: U128) -> Promise {\n        let calculator_account_id: AccountId = \"calc.near\".parse().unwrap();\n        ext_calculator::ext(calculator_account_id).sum(a, b)  // run sum(a, b) on remote\n    }\n}"
+    },
+    {
+        "title": "Use of tautology in branch condition",
+        "description": "Find simple tautology (`true` or `false` involved in the condition) which makes a branch deterministic.",
+        "severity": "Low",
+        "detector_id": "tautology",
+        "sample_code": "let ok: bool = check_state();\nif true || ok {\n    // ...\n} else {\n    // ...\n}"
+    },
+    {
+        "title": "Unsafe math without overflow check",
+        "description": "Enable overflow checks for all arithmetic operations. Otherwise, overflow can occur, resulting in incorrect results. Overflow checks in NEAR contracts can be implemented with two different methods: 1. [Recommended] Turn on the `overflow-checks` in the cargo manifest. In this case, it's okay to use `+`, `-` and `*` for arithmetic operations. 2. Use safe math functions (e.g., `checked_xxx()`) to do arithmetic operations.",
+        "severity": "High",
+        "detector_id": "unsafe-math",
+        "sample_code": "let a = b + c;"
+    },
+    {
+        "title": "Reentrancy",
+        "description": "Find functions that are vulnerable to reentrancy attack. Contracts should always change state before making a cross-contract invocation and roll back the changes in the callback function if the cross-contract invocation fails.",
+        "severity": "High",
+        "detector_id": "reentrancy",
+        "sample_code": "#[near_bindgen]\nimpl VictimContract {\n    pub fn withdraw(&mut self, amount: u128) -> Promise {\n        assert!(self.attacker_balance >= amount);\n        ext_ft_token::ft_transfer_call(\n            amount.into(),\n            &FT_TOKEN,\n            0,\n            env::prepaid_gas() - GAS_FOR_SINGLE_CALL * 2,\n        ).then(ext_self::ft_resolve_transfer(\n            amount.into(),\n            &env::current_account_id(),\n            0,\n            GAS_FOR_SINGLE_CALL,\n        ))\n    }\n\n    #[private]\n    pub fn ft_resolve_transfer(&mut self, amount: u128) {\n        match env::promise_result(0) {\n            PromiseResult::NotReady => unreachable!(),\n            PromiseResult::Successful(_) => {\n                self.attacker_balance -= amount;\n            }\n            PromiseResult::Failed => {}\n        };\n    }\n}"
+    },
+    {
+        "title": "Lack of `#[private]` macro in callback functions",
+        "description": "The callback function should be decorated with `#[private]` to ensure that it can only be invoked by the contract itself. Without this macro, anyone can invoke the callback function, which is against the original design.",
+        "severity": "High",
+        "detector_id": "non-private-callback",
+        "sample_code": "pub fn callback_stake(&mut self) { // this is a callback function\n    // ...\n}"
+    },
+    {
+        "title": "Division before multiplication",
+        "description": "Find division before multiplication like `3 / 2 * 6 == 6`, which has a different result compared with `3 * 6 / 2 == 9`. This can result in precision loss. It is suggested to conduct multiplication before division.",
+        "severity": "Medium",
+        "detector_id": "div-before-mul",
+        "sample_code": "let reward_per_session =\n    farm.amount / (farm.end_date - farm.start_date) as u128 * SESSION_INTERVAL as u128;"
+    },
+    {
+        "title": "Find all public interfaces",
+        "description": "Public interfaces are functions that can be called by others. Specifically, they are public functions without `#[private]` macro of a `#[near_bindgen]` struct.",
+        "severity": "Info",
+        "detector_id": "public-interface",
+        "sample_code": "#[near_bindgen]\nimpl Contract {\n    pub fn withdraw(&mut self, amount: U128) -> Promise {\n        unimplemented!()\n    }\n\n    pub fn check_balance(&self) -> U128 {\n        unimplemented!()\n    }\n\n    #[private]\n    pub fn callback_withdraw(&mut self, amount: U128) {\n        unimplemented!()\n    }\n\n    fn sub_balance(&mut self, amount: u128) {\n        unimplemented!()\n    }\n}"
+    },
+    {
+        "title": "Lack of upgrade function",
+        "description": "Contracts may need the upgrade function, Rustle will check if such an interface exists in the contract. Without an upgrade function, the contract cannot be upgraded and contract states cannot be migrated.",
+        "severity": "Low",
+        "detector_id": "upgrade-func",
+        "sample_code": "mod upgrade {\n    use near_sdk::{require, Gas};\n\n    use super::*;\n    use near_sys as sys;\n\n    const GAS_TO_COMPLETE_UPGRADE_CALL: Gas = Gas(Gas::ONE_TERA.0 * 10);\n    const GAS_FOR_GET_CONFIG_CALL: Gas = Gas(Gas::ONE_TERA.0 * 5);\n    const MIN_GAS_FOR_MIGRATE_STATE_CALL: Gas = Gas(Gas::ONE_TERA.0 * 10);\n\n    #[no_mangle]\n    pub extern \"C\" fn upgrade() {\n        // ... (implementation details)\n    }\n}"
+    },
+    {
+        "title": "NEP-141 transfer doesn't panic on unregistered receiver accounts",
+        "description": "According to the implementation of NEP-141, a transfer receiver that has not been registered should result in panic. Developers may try to register a new account for the receiver without asking for the storage fee, which may lead to DoS.",
+        "severity": "Medium",
+        "detector_id": "unregistered-receiver",
+        "sample_code": "#[near_bindgen]\n#[derive(BorshDeserialize, BorshSerialize)]\npub struct Contract {\n    accounts: UnorderedMap<AccountId, Balance>,\n    total_supply: Balance,\n}\n\nimpl Contract {\n    pub fn internal_unwrap_balance_safe(&self, account_id: &AccountId) -> Balance {\n        self.accounts\n            .get(account_id)\n            .unwrap_or_else(|| env::panic_str(\"Account is not registered\"))\n    }\n    pub fn internal_unwrap_balance_unsafe(&self, account_id: &AccountId) -> Balance {\n        self.accounts.get(account_id).unwrap_or(0)\n    }\n}"
+    },
+    {
+        "title": "Duplicate id uses in collections",
+        "description": "Collections in NEAR SDK use function `new` to initialize itself. The argument `prefix` is an identifier for collection. Every collection should have an id different from the id of other collections.",
+        "severity": "Medium",
+        "detector_id": "dup-collection-id",
+        "sample_code": "#[near_bindgen]\n#[derive(BorshDeserialize, BorshSerialize)]\npub struct Contract {\n    orders: UnorderedMap<u16, Order>,\n    users: UnorderedSet<AccountId>,\n}\n\n#[near_bindgen]\nimpl Contract {\n    #[init]\n    pub fn new() -> Self {\n        Self {\n            orders: UnorderedMap::new(StorageKey::Orders),\n            users: UnorderedSet::new(StorageKey::Orders), // Should use `StorageKey::Users` here\n        }\n    }\n}"
+    },
+    {
+        "title": "Lack of check approval id during NFT transfer",
+        "description": "During an NFT transfer (i.e, `nft_transfer` and `nft_transfer_call`), if the sender of the transfer is not the owner of the NFT, the `approval_id` of the transfer should be checked to make sure the sender has the authority to launch this transfer. Without this check, anyone can transfer an NFT to other accounts without approval.",
+        "severity": "High",
+        "detector_id": "nft-approval-check",
+        "sample_code": "let app_acc_ids =\n    approved_account_ids.as_ref().unwrap_or_else(|| env::panic_str(\"Unauthorized\"));\n\nlet actual_approval_id = app_acc_ids.get(sender_id);\n\nif actual_approval_id.is_none() {\n    env::panic_str(\"Sender not approved\");\n}\n\nrequire!(\n    approval_id.is_none() || actual_approval_id == approval_id.as_ref(),\n    format!(\n        \"The actual approval_id {:?} is different from the given approval_id {:?}\",\n        actual_approval_id, approval_id\n    )\n);"
+    },
+    {
+        "title": "Unused return values of non-void function",
+        "description": "The return value of functions should be used. Otherwise, some information may be lost or unchecked.",
+        "severity": "Low",
+        "detector_id": "unused-ret",
+        "sample_code": "#[payable]\npub fn remove_guardians(&mut self, guardians: Vec<ValidAccountId>) {\n    assert_one_yocto();\n    self.assert_owner();\n    for guardian in guardians {\n        self.guardians.remove(guardian.as_ref());\n    }\n}"
+    },
+    {
+        "title": "Improper `#[private]` use in non-callback function",
+        "description": "Macro `#[private]` is usually used in callback function to ensure `current_account_id` equals `predecessor_account_id`. It shouldn't be used in non-callback functions. Otherwise, a public function will be an internal one.",
+        "severity": "Low",
+        "detector_id": "non-callback-private",
+        "sample_code": "#[near_bindgen]\nimpl Pool {\n    #[private]\n    pub fn get_tokens(&self) -> &[AccountId] {\n        &self.token_account_ids\n    }\n}"
+    }
+]
