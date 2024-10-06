@@ -30,13 +30,3 @@ def read_files_in_folder(folder_path):
         print(f"Error accessing folder {folder_path}: {str(e)}")
 
     return file_contents
-
-
-if __name__ == "__main__":
-    folder_to_read = "../tictactoe/src/"
-    files_content = read_files_in_folder(folder_to_read)
-
-    for filepath, content in files_content.items():
-        print(f"File: {filepath}")
-        print(f"Content:\n{content[:100]}...")  # Print first 100 characters
-        print("-" * 50)
