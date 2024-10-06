@@ -9,7 +9,6 @@ def save_results_to_file(audit_result, file_name):
 
     # Construct the full path for the output file
     output_path = os.path.join(audit_dir, file_name)
-    print(f"Saving audit results to {output_path}...")
 
     with open(output_path, "w") as f:
         json_data = [

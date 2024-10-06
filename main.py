@@ -1,5 +1,6 @@
 import argparse
 import time
+import json
 
 from auditor import audit
 from file_reader import read_files_in_folder
@@ -28,6 +29,8 @@ def main():
 
     audit_result = audit(files_content, args.model)
     save_results_to_file(audit_result, args.output)
+
+    print(json.dumps(audit_result))
 
     return audit_result
 

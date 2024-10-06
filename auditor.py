@@ -55,7 +55,10 @@ def audit(files_content, model="gpt-4o"):
         ):
             chat_completion["file_path"] = filepath
             audit_result.append(chat_completion)
-        elif hasattr(chat_completion, "vulnerabilities"):
+        elif (
+            hasattr(chat_completion, "vulnerabilities")
+            and chat_completion.vulnerabilities != []
+        ):
             chat_completion.file_path = filepath
             audit_result.append(chat_completion)
 
