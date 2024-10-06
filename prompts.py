@@ -65,7 +65,6 @@ If you find no vulnerabilities in the code, return an empty array in the JSON fo
 
 Provide your analysis results in the following JSON format:
 
-<output>
 {
   "vulnerabilities": [
     {
@@ -77,7 +76,6 @@ Provide your analysis results in the following JSON format:
     ...
   ]
 }
-</output>
 
 Ensure that your output is valid JSON and contains all the required fields for each vulnerability found. If no vulnerabilities are found, the "vulnerabilities" array should be empty.
 """
