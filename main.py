@@ -10,7 +10,10 @@ from utils import save_results_to_file
 def main():
     parser = argparse.ArgumentParser(description="Near Smart Contract Auditor")
     parser.add_argument(
-        "folder_path", help="Path to the folder containing Rust files to audit"
+        "folder_path",
+        nargs="?",
+        default=".",
+        help="Path to the folder containing Rust files to audit (default: current directory)",
     )
     parser.add_argument(
         "--model",
