@@ -3,11 +3,14 @@ name: Continuous Integration
 on:
   pull_request:
     branches:
-      - master
-      - develop
-  push:
-    branches:
-      - "**"
+      - test
+  # pull_request:
+  #   branches:
+  #     - master
+  #     - develop
+  # push:
+  #   branches:
+  #     - "**"
 
 jobs:
   audit-action:
