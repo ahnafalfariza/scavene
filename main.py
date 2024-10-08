@@ -33,7 +33,10 @@ def main():
     audit_result = audit(files_content, args.model)
     save_results_to_file(audit_result, args.output)
 
-    print(json.dumps(audit_result))
+    formatted_audit_result = [
+        result.dict() if hasattr(result, "dict") else result for result in audit_result
+    ]
+    print(json.dumps(formatted_audit_result))
 
     return audit_result
 
