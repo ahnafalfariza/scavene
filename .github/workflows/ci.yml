@@ -24,7 +24,6 @@ jobs:
         id: test-action
         uses: ./
         with:
-          model: "gpt-4o"
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           myToken: ${{ secrets.GITHUB_TOKEN }}

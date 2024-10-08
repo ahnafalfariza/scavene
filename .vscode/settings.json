@@ -2,9 +2,12 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "ms-python.black-formatter",
   "[javascript]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[yaml]": {
     "editor.defaultFormatter": "redhat.vscode-yaml"
-  }
+  },
+  "prettier.semi": false,
+  "prettier.singleQuote": true,
+  "prettier.printWidth": 80
 }
