@@ -38622,6 +38622,11 @@ const { table } = __nccwpck_require__(4112);
 function displayTable(data) {
   console.log("\n\n\n")
 
+  if (data.length === 0) {
+    console.log("No vulnerabilities detected")
+    return
+  }
+
   for (const file of data) {
     const tableData = [
       ['Severity', 'Description', 'Line', 'Code Snippet'], // Header row
@@ -38643,6 +38648,60 @@ function displayTable(data) {
   }
 }
 
+function jsonToMd(vulnerabilities_data) {
+  let md = "# 🔍 Vulnerability Report\n\n";
+
+  if (vulnerabilities_data.length === 0) {
+    md += "✅ **No vulnerabilities detected**\n\n";
+  }
+
+  vulnerabilities_data.forEach(file => {
+    md += `## 📁 File: ${file.file_path}\n\n`;
+
+    const severityEmojis = {
+      "Critical": "🚫",
+      "High": "🚨",
+      "Medium": "⚠️",
+      "Low": "ℹ️"
+    };
+
+    const severityGroups = {
+      Critical: [],
+      High: [],
+      Medium: [],
+      Low: []
+    };
+
+    file.vulnerabilities.forEach(vuln => {
+      severityGroups[vuln.severity_level].push(vuln);
+    });
+
+    for (const [severity, vulns] of Object.entries(severityGroups)) {
+      if (vulns.length !== 0) {
+        md += `### ${severityEmojis[severity]} ${severity} Severity\n\n`;
+
+        vulns.forEach(vuln => {
+          md += `**Lines ${vuln.line_number}:**\n`;
+          md += "```rust\n" + vuln.code_snippet + "\n```\n";
+          md += `${getIssueEmoji(vuln.severity_description)} **Issue:** ${vuln.severity_description}\n\n`;
+        });
+      }
+    }
+  });
+
+  md += "### Disclaimer\n\n**Important:** This scan was conducted using AI-based tools, which, while effective for identifying common issues, have limitations. AI may miss complex vulnerabilities, produce false positives, or misinterpret context."
+
+  return md;
+}
+
+function getIssueEmoji(description) {
+  if (description.includes("overflow")) return "💥";
+  if (description.includes("private") || description.includes("access")) return "🔒";
+  if (description.includes("byte")) return "🔢";
+  if (description.includes("panic") || description.includes("unwrap")) return "❗";
+  return "🔴";
+}
+
 async function main() {
   let myOutput = '';
 
@@ -38661,12 +38720,14 @@ async function main() {
   const myToken = core.getInput('myToken');
   const octokit = github.getOctokit(myToken)
 
-  await octokit.rest.issues.createComment({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    issue_number: github.context.issue.number,
-    body: '```json\n' + JSON.stringify(parsedData, null, 2) + '\n```'
-  })
+  if (github.context.eventName === 'pull_request') {
+    await octokit.rest.issues.createComment({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      issue_number: github.context.issue.number,
+      body: jsonToMd(parsedData)
+    })
+  }
 }
 
 main()
