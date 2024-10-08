@@ -10,8 +10,9 @@ on:
       - "**"
 
 jobs:
-  test-action:
-    name: GitHub Actions Test
+  audit-action:
+    name: Audit Action
+    permissions: "write-all"
     runs-on: ubuntu-latest
 
     steps:
