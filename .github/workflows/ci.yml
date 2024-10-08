@@ -1,0 +1,32 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - test
+  # pull_request:
+  #   branches:
+  #     - master
+  #     - develop
+  # push:
+  #   branches:
+  #     - "**"
+
+jobs:
+  audit-action:
+    name: Audit Action
+    permissions: "write-all"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Test Local Action
+        id: test-action
+        uses: ./
+        with:
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          myToken: ${{ secrets.GITHUB_TOKEN }}

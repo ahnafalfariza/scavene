@@ -12,7 +12,7 @@ The Smart Contract Auditor is a tool designed to automatically audit Rust-based 
 
 1. Clone this repository:
    ```sh
-   git clone https://github.com/yourusername/smart-contract-auditor.git
+   git clone https://github.com/ahnafalfariza/smart-contract-auditor.git
    cd smart-contract-auditor
    ```
 
@@ -44,7 +44,7 @@ To use the Smart Contract Auditor, run the `main.py` script with the following s
 python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE]
 ```
 
-- `<folder_path>`: Path to the folder containing Rust files to audit (required)
+- `<folder_path>`: Path to the folder containing Rust files to audit, if not exist it will scan current directory
 - `--model`: Choose the model to use for auditing (optional, default: gpt-4o)
   - Options: gpt-4o, gpt-3.5-turbo, claude-3.5-sonnet
 - `--output`: Output file name for audit results (optional, default: audit_results_<timestamp>.json)

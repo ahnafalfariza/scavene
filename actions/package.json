@@ -1,0 +1,21 @@
+{
+  "name": "node-action",
+  "version": "0.1.0",
+  "description": "Github javascript action audit",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "npx ncc build index.js -o dist --source-map --license licenses.txt"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/exec": "^1.1.1",
+    "@actions/github": "^6.0.0",
+    "table": "^6.8.2"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.2"
+  }
+}
