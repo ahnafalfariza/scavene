@@ -1,6 +1,8 @@
 import argparse
 import time
 import json
+import csv
+import sys
 
 from auditor import audit
 from file_reader import read_files_in_folder
@@ -23,15 +25,23 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default=f"audit_results_{int(time.time())}.json",
-        help="Output file name for audit results with timestamp (default: audit_results_<timestamp>.json)",
+        default=f"audit_results_{int(time.time())}",
+        help="Output file name for audit results without extension (default: audit_results_<timestamp>)",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["json", "csv"],
+        default="json",
+        help="Choose the output format (default: json)",
     )
 
     args = parser.parse_args()
     files_content = read_files_in_folder(args.folder_path)
 
     audit_result = audit(files_content, args.model)
-    save_results_to_file(audit_result, args.output)
+
+    output_file = f"{args.output}.{args.format}"
+    save_results_to_file(audit_result, output_file, args.format)
 
     formatted_audit_result = [
         result.dict() if hasattr(result, "dict") else result for result in audit_result
