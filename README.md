@@ -46,12 +46,14 @@ python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE]
 
 - `<folder_path>`: Path to the folder containing Rust files to audit, if not exist it will scan current directory
 - `--model`: Choose the model to use for auditing (optional, default: gpt-4o)
-  - Options: gpt-4o, gpt-3.5-turbo, claude-3.5-sonnet
+   - Options: gpt-4o, gpt-3.5-turbo, claude-3.5-sonnet
 - `--output`: Output file name for audit results (optional, default: audit_results_<timestamp>.json)
+- `--format`: Specifies the output format for the audit results. (optional)
+   - Options: json, csv
 
 Example:
 ```sh
-python main.py /path/to/your/rust/files --model claude-3.5-sonnet --output my_audit_results.json
+python main.py /path/to/your/rust/files --model claude-3.5-sonnet 
 ```
 
 The audit results will be saved in the `audit_results` directory.
