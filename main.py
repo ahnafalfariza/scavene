@@ -31,11 +31,13 @@ def load_vulnerabilities(file_path):
     - metadata: A dictionary with the 'source' key set to the detector ID
     """
     documents = []
-    with open(file_path, newline='') as csvfile:
+    with open(file_path, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             content = f"Title: {row['title']}\nDescription: {row['description']}\nSeverity: {row['severity']}\nDetector ID: {row['detector_id']}\nSample Code:\n{row['sample_code']}"
-            doc = Document(page_content=content, metadata={"source": row['detector_id']})
+            doc = Document(
+                page_content=content, metadata={"source": row["detector_id"]}
+            )
             documents.append(doc)
     return documents
 
