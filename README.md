@@ -1,6 +1,6 @@
 # Scavene
 
-Scavene is an advanced tool designed to automatically audit Rust-based smart contracts for potential vulnerabilities using Large Language Models (LLMs). It leverages state-of-the-art AI technology to analyze smart contract code, identify security issues, and provide vulnerability reports to developers and auditors.
+Scavene is an advanced tool designed to automatically audit Rust-based smart contracts for potential vulnerabilities using Large Language Models (LLMs). It leverages state-of-the-art AI technology with retrieval-augmented generation to enhance its analysis. By retrieving facts from an external knowledge base, such as common vulnerabilities in NEAR, security issues, and best practices, Scavene can identifies security threats and provides comprehensive vulnerability reports to developers and auditors
 
 ## Table of Contents
 
