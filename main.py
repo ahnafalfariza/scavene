@@ -3,10 +3,44 @@ import time
 import json
 import csv
 import sys
+from langchain.schema import Document
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
 
 from auditor import audit
 from file_reader import read_files_in_folder
 from utils import save_results_to_file
+
+
+def load_vulnerabilities(file_path):
+    documents = []
+    with open(file_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            content = f"Title: {row['title']}\nDescription: {row['description']}\nSeverity: {row['severity']}\nDetector ID: {row['detector_id']}\nSample Code:\n{row['sample_code']}"
+            doc = Document(page_content=content, metadata={"source": row['detector_id']})
+            documents.append(doc)
+    return documents
+
+
+def initialize_retriever():
+    """
+    Initialize and return a VectorStoreRetriever for the external knowledge base.
+
+    Returns:
+    VectorStoreRetriever: The initialized retriever object.
+    """
+    # Load vulnerabilities from CSV
+    documents = load_vulnerabilities("vulnerabilities/list_vulnerabilities.csv")
+
+    # Initialize embeddings
+    embeddings = OpenAIEmbeddings()
+
+    # Create the vector store
+    vector_store = FAISS.from_documents(documents, embeddings)
+
+    # Create and return a retriever
+    return vector_store.as_retriever(search_kwargs={"k": 5})
 
 
 def main():
@@ -47,7 +81,11 @@ def main():
     args = parser.parse_args()
     files_content = read_files_in_folder(args.folder_path)
 
-    audit_result = audit(files_content, args.model)
+    # Initialize the retriever for the external knowledge base
+    retriever = initialize_retriever()
+
+    # Pass the retriever to the audit function
+    audit_result = audit(files_content, args.model, retriever)
 
     output_file = f"{args.output}.{args.format}"
     save_results_to_file(audit_result, output_file, args.format)
