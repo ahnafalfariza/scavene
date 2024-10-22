@@ -1,12 +1,11 @@
 import argparse
 import time
 import json
-import csv
-import sys
 
 from auditor import audit
 from file_reader import read_files_in_folder
 from utils import save_results_to_file
+from vulnerabilities.retrieval import initialize_retriever
 
 
 def main():
@@ -47,7 +46,11 @@ def main():
     args = parser.parse_args()
     files_content = read_files_in_folder(args.folder_path)
 
-    audit_result = audit(files_content, args.model)
+    # Initialize the retriever for the external knowledge base
+    retriever = initialize_retriever()
+
+    # Pass the retriever to the audit function
+    audit_result = audit(files_content, args.model, retriever)
 
     output_file = f"{args.output}.{args.format}"
     save_results_to_file(audit_result, output_file, args.format)
