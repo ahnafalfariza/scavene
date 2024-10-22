@@ -1,6 +1,8 @@
 [submodule "model"]
 	path = model
 	url = git@github.com:jbarnes850/near-fine-tuning-job.git
+	branch = main
 [submodule "vulnerabilities/static-analyzer"]
 	path = vulnerabilities/static-analyzer
 	url = git@github.com:blocksecteam/rustle.git
+	branch = main
