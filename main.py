@@ -13,6 +13,23 @@ from utils import save_results_to_file
 
 
 def load_vulnerabilities(file_path):
+    """
+    Load vulnerability information from a CSV file and convert it into a list of Document objects.
+
+    This function reads a CSV file containing vulnerability data and creates a Document object
+    for each row. The Document objects contain formatted content with vulnerability details
+    and metadata with the detector ID.
+
+    Args:
+        file_path (str): The path to the CSV file containing vulnerability information.
+
+    Returns:
+        list: A list of Document objects, each representing a vulnerability from the CSV file.
+
+    Each Document object contains:
+    - page_content: A formatted string with vulnerability details (title, description, severity, etc.)
+    - metadata: A dictionary with the 'source' key set to the detector ID
+    """
     documents = []
     with open(file_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
