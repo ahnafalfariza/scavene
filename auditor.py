@@ -72,6 +72,8 @@ def audit_file_with_knowledge(file_content, model, retriever):
         return audit_file_old_model(file_content, relevant_knowledge)
     elif model == "claude-3.5-sonnet":
         return audit_file_claude(file_content, relevant_knowledge)
+    # elif model == "near-fine-tuned-4o":
+    #     return audit_file_near_ecosystem(file_content, relevant_knowledge)
     else:
         logging.error(f"Invalid model specified: {model}")
         raise ValueError("Invalid model specified.")
@@ -165,6 +167,34 @@ def audit_file_claude(file_content, relevant_knowledge):
         return json.loads(message.content[0].text)
     except json.JSONDecodeError:
         return {"error": "Invalid JSON response from Claude model"}
+
+
+def audit_file_near_ecosystem(file_content, relevant_knowledge):
+    """
+    Audit a file using the ahnafalfariza/near-fine-tuned-4o model from Hugging Face.
+
+    Args:
+    file_content (str): The content of the file to be audited.
+    relevant_knowledge (str): Relevant knowledge for the audit.
+
+    Returns:
+    dict: The parsed JSON response from the model, or an error dictionary if parsing fails.
+    """
+
+    # tokenizer = AutoTokenizer.from_pretrained("ahnafalfariza/near-fine-tuned-4o")
+    # model = AutoModelForCausalLM.from_pretrained("ahnafalfariza/near-fine-tuned-4o")
+
+    # prompt = f"Relevant knowledge:\n{relevant_knowledge}\n\nFile content:\n{file_content}\n\nAudit this code for security vulnerabilities and provide the result in JSON format."
+
+    # inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
+    # outputs = model.generate(**inputs, max_length=2048, num_return_sequences=1)
+
+    # response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    # try:
+    #     return json.loads(response)
+    # except json.JSONDecodeError:
+    #     return {"error": "Invalid JSON response from Near Ecosystem model"}
 
 
 def audit(files_content, model="gpt-4o", retriever=None):
