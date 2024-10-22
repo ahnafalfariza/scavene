@@ -10,6 +10,15 @@ from utils import save_results_to_file
 
 
 def main():
+    """
+    Main function to run the Near Smart Contract Auditor.
+
+    Parses command-line arguments, reads files from the specified folder,
+    performs the audit, saves the results, and prints the output.
+
+    Returns:
+    list: The audit results.
+    """
     parser = argparse.ArgumentParser(description="Near Smart Contract Auditor")
     parser.add_argument(
         "folder_path",

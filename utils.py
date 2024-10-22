@@ -4,6 +4,14 @@ import csv
 
 
 def save_results_to_file(audit_result, file_name, format="json"):
+    """
+    Save audit results to a file in the specified format.
+
+    Args:
+    audit_result (list): The audit results to save.
+    file_name (str): The name of the output file.
+    format (str): The output format, either "json" or "csv" (default: "json").
+    """
     # Create a new directory for audit results
     audit_dir = "audit_results"
     os.makedirs(audit_dir, exist_ok=True)
@@ -32,6 +40,15 @@ def save_results_to_file(audit_result, file_name, format="json"):
 
 
 def transform_json(input_json):
+    """
+    Transform the input JSON data into a flattened format suitable for CSV export.
+
+    Args:
+    input_json (list): The input JSON data to transform.
+
+    Returns:
+    list: A list of dictionaries with flattened data structure.
+    """
     output = []
 
     for file_entry in input_json:
@@ -48,3 +65,26 @@ def transform_json(input_json):
             output.append(output_entry)
 
     return output
+
+def export_to_csv(data, output_file):
+    """
+    Export data to a CSV file.
+    
+    Args:
+    data (list): List of dictionaries containing the data to be exported.
+    output_file (str): Path to the output CSV file.
+    """
+    if not data:
+        print("No data to export.")
+        return
+
+    fieldnames = data[0].keys()
+
+    with open(output_file, 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+
+    print(f"Data exported to {output_file}")
+

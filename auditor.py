@@ -9,6 +9,15 @@ from prompts import prompt_4o, prompt_older_model
 
 
 def audit_file_4o(file_content):
+    """
+    Audit a file using the GPT-4o model.
+
+    Args:
+    file_content (str): The content of the file to be audited.
+
+    Returns:
+    AuditResponse: The parsed audit response from the GPT-4o model.
+    """
     openai_client = OpenAI(
         api_key=os.environ.get("OPENAI_API_KEY"),
     )
@@ -24,6 +33,16 @@ def audit_file_4o(file_content):
 
 
 def audit_file_old_model(file_content, model="gpt-3.5-turbo"):
+    """
+    Audit a file using an older GPT model.
+
+    Args:
+    file_content (str): The content of the file to be audited.
+    model (str): The model to use for auditing (default: "gpt-3.5-turbo").
+
+    Returns:
+    dict: The parsed JSON response from the model, or an error dictionary if parsing fails.
+    """
     openai_client = OpenAI(
         api_key=os.environ.get("OPENAI_API_KEY"),
     )
@@ -42,6 +61,15 @@ def audit_file_old_model(file_content, model="gpt-3.5-turbo"):
 
 
 def audit_file_claude(file_content):
+    """
+    Audit a file using the Claude 3.5 Sonnet model.
+
+    Args:
+    file_content (str): The content of the file to be audited.
+
+    Returns:
+    dict: The parsed JSON response from the Claude model, or an error dictionary if parsing fails.
+    """
     anthropic_client = anthropic.Anthropic(
         api_key=os.environ.get("ANTHROPIC_API_KEY"),
     )
@@ -62,6 +90,19 @@ def audit_file_claude(file_content):
 
 
 def audit(files_content, model="gpt-4o"):
+    """
+    Audit multiple files using the specified model.
+
+    Args:
+    files_content (dict): A dictionary where keys are file paths and values are file contents.
+    model (str): The model to use for auditing (default: "gpt-4o").
+
+    Returns:
+    list: A list of audit results for files with vulnerabilities.
+
+    Raises:
+    ValueError: If an invalid model is specified.
+    """
     audit_result = []
     for filepath, content in files_content.items():
         chat_completion = None
