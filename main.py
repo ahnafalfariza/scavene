@@ -1,11 +1,13 @@
 import argparse
 import time
 import json
+import logging
 
 from auditor import audit
 from file_reader import read_files_in_folder
 from utils import save_results_to_file
 from vulnerabilities.retrieval import initialize_retriever
+from logging_config import setup_logging
 
 
 def main():
@@ -42,17 +44,34 @@ def main():
         default="json",
         help="Choose the output format (default: json)",
     )
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+        help="Set the logging level (default: INFO)",
+    )
+    parser.add_argument("--no-log", action="store_true", help="Disable all logging")
 
     args = parser.parse_args()
-    files_content = read_files_in_folder(args.folder_path)
 
-    # Initialize the retriever for the external knowledge base
+    setup_logging(args.log_level, args.no_log)
+
+    logging.info(f"Starting audit process with model: {args.model}")
+    logging.info(f"Reading files from folder: {args.folder_path}")
+    files_content = read_files_in_folder(args.folder_path)
+    logging.info(f"Found {len(files_content)} Rust files to audit")
+    for file_name in files_content.keys():
+        logging.info(f"File to audit: {file_name}")
+    logging.info("Starting audit process")
+
+    logging.info("Initializing retriever for external knowledge base")
     retriever = initialize_retriever()
 
-    # Pass the retriever to the audit function
+    logging.info("Starting audit")
     audit_result = audit(files_content, args.model, retriever)
 
     output_file = f"{args.output}.{args.format}"
+    logging.info(f"Saving audit results to {output_file}")
     save_results_to_file(audit_result, output_file, args.format)
 
     formatted_audit_result = [

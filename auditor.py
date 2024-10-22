@@ -1,6 +1,7 @@
 import os
 import json
 import anthropic
+import logging
 from openai import OpenAI
 
 from file_reader import read_files_in_folder
@@ -57,9 +58,13 @@ def audit_file_with_knowledge(file_content, model, retriever):
     Returns:
     dict or AuditResponse: The parsed audit response from the model.
     """
-    # Create a query that includes key information from the file content
-    query = f"Audit this Rust code for security vulnerabilities: {file_content[:500]}..."  # Use first 500 characters as a sample
+    query = (
+        f"Audit this Rust code for security vulnerabilities: {file_content[:500]}..."
+    )
+    logging.debug(f"Generated query for knowledge retrieval: {query[:100]}...")
+
     relevant_knowledge = get_relevant_knowledge(query, retriever)
+    logging.debug(f"Retrieved relevant knowledge: {len(relevant_knowledge)} characters")
 
     if model == "gpt-4o":
         return audit_file_4o(file_content, relevant_knowledge)
@@ -68,6 +73,7 @@ def audit_file_with_knowledge(file_content, model, retriever):
     elif model == "claude-3.5-sonnet":
         return audit_file_claude(file_content, relevant_knowledge)
     else:
+        logging.error(f"Invalid model specified: {model}")
         raise ValueError("Invalid model specified.")
 
 
@@ -177,12 +183,16 @@ def audit(files_content, model="gpt-4o", retriever=None):
     ValueError: If an invalid model is specified or if the retriever is not provided.
     """
     if retriever is None:
+        logging.error("Retriever not provided for the external knowledge base")
         raise ValueError(
             "A retriever must be provided for the external knowledge base."
         )
 
+    logging.info(f"Auditing files with model: {model}")
+
     audit_result = []
     for filepath, content in files_content.items():
+        logging.info(f"Auditing file: {filepath}")
         chat_completion = audit_file_with_knowledge(content, model, retriever)
 
         if (
@@ -190,15 +200,18 @@ def audit(files_content, model="gpt-4o", retriever=None):
             and "vulnerabilities" in chat_completion
             and chat_completion["vulnerabilities"]
         ):
+            logging.info(f"Vulnerabilities found in {filepath}")
             chat_completion["file_path"] = filepath
             audit_result.append(chat_completion)
         elif (
             hasattr(chat_completion, "vulnerabilities")
             and chat_completion.vulnerabilities != []
         ):
+            logging.info(f"Vulnerabilities found in {filepath}")
             chat_completion.file_path = filepath
             audit_result.append(chat_completion)
 
+    logging.info(f"Audit completed. Found vulnerabilities in {len(audit_result)} files")
     return audit_result
 
 

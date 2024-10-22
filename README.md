@@ -101,7 +101,7 @@ Now, Scavene will automatically run on every push to the main branch and on pull
 To use the Smart Contract Auditor, run the `main.py` script with the following syntax:
 
 ```sh
-python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE] [--format FORMAT]
+python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE] [--format FORMAT] [--log-level LOG_LEVEL] [--no-log]
 ```
 
 - `<folder_path>`: Path to the folder containing Rust files to audit, if not exist it will scan current directory
@@ -110,10 +110,18 @@ python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE] [--format FO
 - `--output`: Output file name for audit results (optional, default: audit_results_<timestamp>.json)
 - `--format`: Specifies the output format for the audit results. (optional)
    - Options: json, csv
+- `--log-level`: Set the logging level (optional, default: INFO)
+   - Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- `--no-log`: Disable all logging (optional)
 
 Example:
 ```sh
-python main.py /path/to/your/rust/files --model claude-3.5-sonnet 
+python main.py /path/to/your/rust/files --model claude-3.5-sonnet --log-level DEBUG
+```
+
+To run the audit without any logging:
+```sh
+python main.py /path/to/your/rust/files --model gpt-4o --no-log
 ```
 
 The audit results will be saved in the `audit_results` directory.
