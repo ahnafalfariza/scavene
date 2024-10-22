@@ -38665,6 +38665,7 @@ function jsonToMd(vulnerabilities_data) {
       High: '🚨',
       Medium: '⚠️',
       Low: 'ℹ️',
+      Informational: '🔍',
     }
 
     const severityGroups = {
@@ -38672,10 +38673,15 @@ function jsonToMd(vulnerabilities_data) {
       High: [],
       Medium: [],
       Low: [],
+      Informational: [],
     }
 
     file.vulnerabilities.forEach((vuln) => {
-      severityGroups[vuln.severity_level].push(vuln)
+      if (severityGroups[vuln.severity_level] !== undefined) {
+        severityGroups[vuln.severity_level].push(vuln)
+      } else {
+        severityGroups[vuln.severity_level] = [vuln]
+      }
     })
 
     for (const [severity, vulns] of Object.entries(severityGroups)) {
