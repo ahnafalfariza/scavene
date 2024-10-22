@@ -41,7 +41,7 @@ The Smart Contract Auditor is a tool designed to automatically audit Rust-based 
 To use the Smart Contract Auditor, run the `main.py` script with the following syntax:
 
 ```sh
-python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE]
+python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE] [--format FORMAT]
 ```
 
 - `<folder_path>`: Path to the folder containing Rust files to audit, if not exist it will scan current directory
