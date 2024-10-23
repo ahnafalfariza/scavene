@@ -59,7 +59,11 @@ jobs:
 
 Now, Scavene will automatically run on every push to the main branch and on pull requests, auditing your smart contract code and providing the results for you to review.
 
-*`[Add PR screenshot of the audit results here]`*
+_Screenshot result on Pull Request and on the action terminal_
+
+<img width="350" alt="image" src="https://github.com/user-attachments/assets/9aba7074-d582-4e9f-b36c-c89d5cbffcc7">
+<img width="579" alt="image" src="https://github.com/user-attachments/assets/028e9ba7-e35f-4582-b258-b4ff73b9b47c">
+
 
 ## 2. Using Scavene Locally
 ## Requirements
