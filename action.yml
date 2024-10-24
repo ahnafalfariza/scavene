@@ -22,13 +22,24 @@ inputs:
   myToken:
     description: "GitHub Token"
     required: true
+  ref:
+    description: "Git reference (branch, tag, or commit SHA) to checkout"
+    required: false
+    default: "master"
 
 runs:
   using: "composite"
   steps:
-    - name: Checkout
-      id: checkout
+    - name: Checkout tool
       uses: actions/checkout@v4
+      with:
+        repository: ahnafalfariza/scavene
+        ref: ${{ inputs.ref }}
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        path: contract
 
     - name: Set up Python
       uses: actions/setup-python@v4
