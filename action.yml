@@ -26,9 +26,11 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout
-      id: checkout
+    - name: Checkout tool
       uses: actions/checkout@v4
+      with:
+        repository: ahnafalfariza/scavene
+        ref: test-ci
 
     - name: Set up Python
       uses: actions/setup-python@v4
