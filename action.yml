@@ -1,5 +1,5 @@
-name: "Smart Contract Auditor"
-description: "Automatically audit Rust-based smart contracts for potential vulnerabilities using LLM models"
+name: "Scavene Action"
+description: "Enhance your NEAR smart contract security with Scavene, the audit tool that detects vulnerabilities and ensures best practices."
 author: "Ahnaf Alfariza"
 
 inputs:
