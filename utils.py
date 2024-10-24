@@ -66,10 +66,11 @@ def transform_json(input_json):
 
     return output
 
+
 def export_to_csv(data, output_file):
     """
     Export data to a CSV file.
-    
+
     Args:
     data (list): List of dictionaries containing the data to be exported.
     output_file (str): Path to the output CSV file.
@@ -80,7 +81,7 @@ def export_to_csv(data, output_file):
 
     fieldnames = data[0].keys()
 
-    with open(output_file, 'w', newline='') as csvfile:
+    with open(output_file, "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for row in data:
@@ -88,3 +89,10 @@ def export_to_csv(data, output_file):
 
     print(f"Data exported to {output_file}")
 
+
+def get_required_env_var(var_name):
+    """Get a required environment variable or raise an exception."""
+    value = os.environ.get(var_name)
+    if not value:
+        raise ValueError(f"{var_name} environment variable is not set")
+    return value

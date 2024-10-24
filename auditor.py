@@ -7,6 +7,7 @@ from openai import OpenAI
 from file_reader import read_files_in_folder
 from audit_response import AuditResponse
 from prompts import prompt_4o, prompt_older_model
+from utils import get_required_env_var
 
 
 def write_relevant_knowledge_to_file(
@@ -89,9 +90,8 @@ def audit_file_4o(file_content, relevant_knowledge):
     Returns:
     AuditResponse: The parsed audit response from the GPT-4o model.
     """
-    openai_client = OpenAI(
-        api_key=os.environ.get("OPENAI_API_KEY"),
-    )
+    api_key = get_required_env_var("OPENAI_API_KEY")
+    openai_client = OpenAI(api_key=api_key)
     chat_completion = openai_client.beta.chat.completions.parse(
         messages=[
             {"role": "system", "content": prompt_4o},
@@ -117,9 +117,8 @@ def audit_file_old_model(file_content, relevant_knowledge, model="gpt-3.5-turbo"
     Returns:
     dict: The parsed JSON response from the model, or an error dictionary if parsing fails.
     """
-    openai_client = OpenAI(
-        api_key=os.environ.get("OPENAI_API_KEY"),
-    )
+    api_key = get_required_env_var("OPENAI_API_KEY")
+    openai_client = OpenAI(api_key=api_key)
     chat_completion = openai_client.chat.completions.create(
         messages=[
             {"role": "system", "content": prompt_older_model},
@@ -147,9 +146,8 @@ def audit_file_claude(file_content, relevant_knowledge):
     Returns:
     dict: The parsed JSON response from the Claude model, or an error dictionary if parsing fails.
     """
-    anthropic_client = anthropic.Anthropic(
-        api_key=os.environ.get("ANTHROPIC_API_KEY"),
-    )
+    api_key = get_required_env_var("ANTHROPIC_API_KEY")
+    anthropic_client = anthropic.Anthropic(api_key=api_key)
     message = anthropic_client.messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=4096,

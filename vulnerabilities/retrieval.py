@@ -2,6 +2,7 @@ import csv
 from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
+from utils import get_required_env_var
 
 
 def load_vulnerabilities(file_path):
@@ -44,8 +45,9 @@ def initialize_retriever():
     # Load vulnerabilities from CSV
     documents = load_vulnerabilities("vulnerabilities/list_vulnerabilities.csv")
 
+    api_key = get_required_env_var("OPENAI_API_KEY")
     # Initialize embeddings
-    embeddings = OpenAIEmbeddings()
+    embeddings = OpenAIEmbeddings(api_key=api_key)
 
     # Create the vector store
     vector_store = FAISS.from_documents(documents, embeddings)
