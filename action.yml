@@ -26,7 +26,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout tool
       uses: actions/checkout@v4
       with:
         repository: ahnafalfariza/scavene
@@ -36,6 +35,7 @@ runs:
       run: |
         echo "Contents of the current directory:"
         ls -la
+      shell: bash
 
     - name: Checkout
       uses: actions/checkout@v4
@@ -46,6 +46,7 @@ runs:
       run: |
         echo "Contents of the current directory:"
         ls -la
+      shell: bash
 
     - name: Set up Python
       uses: actions/setup-python@v4
