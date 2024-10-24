@@ -113,12 +113,12 @@ async function main() {
   const outputFile = core.getInput('output_file')
   const folderPath = core.getInput('folder_path')
 
-  const args = ['main.py']
+  const args = []
   if (folderPath) args.push(folderPath)
   if (model) args.push(`--model ${model}`)
   if (outputFile) args.push(`--output ${outputFile}`)
 
-  await exec.exec('python', args, options)
+  await exec.exec(`python main.py ${args.join(' ')}`, [], options)
 
   const parsedData = JSON.parse(myOutput)
   displayTable(parsedData)
