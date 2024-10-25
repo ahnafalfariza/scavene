@@ -49,6 +49,7 @@ function jsonToMd(vulnerabilities_data) {
       High: '🚨',
       Medium: '⚠️',
       Low: 'ℹ️',
+      Informational: '🔍',
     }
 
     const severityGroups = {
@@ -56,10 +57,15 @@ function jsonToMd(vulnerabilities_data) {
       High: [],
       Medium: [],
       Low: [],
+      Informational: [],
     }
 
     file.vulnerabilities.forEach((vuln) => {
-      severityGroups[vuln.severity_level].push(vuln)
+      if (severityGroups[vuln.severity_level] !== undefined) {
+        severityGroups[vuln.severity_level].push(vuln)
+      } else {
+        severityGroups[vuln.severity_level] = [vuln]
+      }
     })
 
     for (const [severity, vulns] of Object.entries(severityGroups)) {
@@ -107,12 +113,12 @@ async function main() {
   const outputFile = core.getInput('output_file')
   const folderPath = core.getInput('folder_path')
 
-  const args = ['main.py']
+  const args = []
   if (folderPath) args.push(folderPath)
   if (model) args.push(`--model ${model}`)
   if (outputFile) args.push(`--output ${outputFile}`)
 
-  await exec.exec('python', args, options)
+  await exec.exec(`python main.py ${args.join(' ')}`, [], options)
 
   const parsedData = JSON.parse(myOutput)
   displayTable(parsedData)

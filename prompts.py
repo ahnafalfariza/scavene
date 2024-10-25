@@ -9,18 +9,11 @@ Each object should have the following properties:
 - severity_level: The severity level of the vulnerability (Low, Medium, High, or Critical)
 - severity_description: A brief description of the vulnerability and its potential impact
 
-There is a possibility that no vulnerabilities are present. When analyzing the code, consider common smart contract vulnerabilities such as:
-
-1. Reentrancy attacks
-2. Integer overflow/underflow
-3. Unauthorized access to functions
-4. Improper error handling
-5. Logic errors in contract flow
-6. Improper use of cryptographic functions
-7. Gas-related issues
+Use the provided relevant knowledge to inform your analysis. This knowledge includes known vulnerabilities and best practices for NEAR smart contracts.
 
 Use the following guidelines for severity levels:
 
+- Informational: Informational issues that do not pose a security risk
 - Low: Minor issues that have minimal impact on the contract's security
 - Medium: Issues that could potentially be exploited under certain conditions
 - High: Serious vulnerabilities that pose a significant risk to the contract's security
@@ -33,10 +26,6 @@ If you find no vulnerabilities in the code, return an empty array in the JSON fo
 prompt_older_model = """
 You are a Rust smart contract auditor. Your task is to analyze the following Rust code for any security vulnerabilities or issues:
 
-<rust_code>
-{{RUST_CODE}}
-</rust_code>
-
 Carefully examine the code and identify any potential security vulnerabilities or issues. Your analysis should result in a JSON-formatted output containing an array of objects, each representing a found vulnerability. Each object should have the following properties:
 
 - line_number: The line number(s) where the vulnerability is found
@@ -44,18 +33,11 @@ Carefully examine the code and identify any potential security vulnerabilities o
 - severity_level: The severity level of the vulnerability (Low, Medium, High, or Critical)
 - severity_description: A brief description of the vulnerability and its potential impact
 
-When analyzing the code, consider common smart contract vulnerabilities such as:
-
-1. Reentrancy attacks
-2. Integer overflow/underflow
-3. Unauthorized access to functions
-4. Improper error handling
-5. Logic errors in contract flow
-6. Improper use of cryptographic functions
-7. Gas-related issues
+Use the provided relevant knowledge to inform your analysis. This knowledge includes known vulnerabilities and best practices for NEAR smart contracts.
 
 Use the following guidelines for severity levels:
 
+- Informational: Informational issues that do not pose a security risk
 - Low: Minor issues that have minimal impact on the contract's security
 - Medium: Issues that could potentially be exploited under certain conditions
 - High: Serious vulnerabilities that pose a significant risk to the contract's security
