@@ -1,5 +1,5 @@
 name: "Scavene Action"
-description: "Enhance your NEAR smart contract security with Scavene, the audit tool that detects vulnerabilities and ensures best practices."
+description: "Enhance your NEAR smart contract security with Scavene, audit tool that detects vulnerabilities and ensures best practices."
 author: "Ahnaf Alfariza"
 
 inputs:
