@@ -34,22 +34,23 @@ name: Scavene Smart Contract Audit
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
-
+    branches:
+      - main
 jobs:
   audit:
     runs-on: ubuntu-latest
     permissions: "write-all"
     steps:
-    - uses: actions/checkout@v4
-    - name: Run Scavene Audit
-      uses: ahnafalfariza/scavene-action@v1
-      with:
-        openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-        anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-        model: 'gpt-4'
+      - name: Scavene Audit
+        uses: ahnafalfariza/scavene
+        with:
+          openai_api_key: '${{ secrets.OPENAI_API_KEY }}'
+          anthropic_api_key: '${{ secrets.ANTHROPIC_API_KEY }}'
+          model: claude-3.5-sonnet
+          myToken: '${{ secrets.GITHUB_TOKEN }}'
 ```
 
 4. Add your API keys as secrets in your GitHub repository:
