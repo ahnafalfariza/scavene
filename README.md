@@ -45,7 +45,7 @@ jobs:
     permissions: "write-all"
     steps:
       - name: Scavene Audit
-        uses: ahnafalfariza/scavene
+        uses: ahnafalfariza/scavene@master
         with:
           openai_api_key: '${{ secrets.OPENAI_API_KEY }}'
           anthropic_api_key: '${{ secrets.ANTHROPIC_API_KEY }}'
