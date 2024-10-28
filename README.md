@@ -77,8 +77,8 @@ _Screenshot result on Pull Request and on the action terminal_
 
 1. Clone this repository:
    ```sh
-   git clone https://github.com/ahnafalfariza/smart-contract-auditor.git
-   cd smart-contract-auditor
+   git clone https://github.com/ahnafalfariza/scavene.git
+   cd scavene
    ```
 
 2. Create and activate a virtual environment:
@@ -103,7 +103,7 @@ _Screenshot result on Pull Request and on the action terminal_
 
 ## Usage Guide
 
-To use the Smart Contract Auditor, run the `main.py` script with the following syntax:
+To use the Scavene, run the `main.py` script with the following syntax:
 
 ```sh
 python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE] [--format FORMAT] [--log-level LOG_LEVEL] [--no-log]
