@@ -10,7 +10,7 @@ RAG is a technique that combines the power of large language models with the abi
 
 ### The RAG Process
 
-1. **Knowledge Base Creation**: We maintain a database of known vulnerabilities, security best practices, and common issues in Near smart contracts. This database is stored in [this file](/vulnerabilities/list_vulnerabilities.csv)
+1. **Knowledge Base Creation**: We maintain a database of known vulnerabilities, security best practices, and common issues in Near smart contracts, integrated from [BlockSec's Rustle detector repository](https://github.com/blocksecteam/rustle?tab=readme-ov-file#detectors). This database is stored in [this file](/vulnerabilities/list_vulnerabilities.csv)
 
 Sample of the knowledge base:
 
