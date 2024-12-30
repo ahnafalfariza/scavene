@@ -4,7 +4,6 @@ import anthropic
 import logging
 from openai import OpenAI
 
-from file_reader import read_files_in_folder
 from audit_response import AuditResponse
 from prompts import prompt_4o, prompt_older_model
 from utils import get_required_env_var
