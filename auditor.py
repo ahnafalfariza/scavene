@@ -1,12 +1,10 @@
-import os
-import json
-import anthropic
 import logging
 from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain.prompts import ChatPromptTemplate
 
 from audit_response import AuditResponse
-from prompts import prompt_4o, prompt_older_model
+from prompts import prompt_4o
 from utils import get_required_env_var
 
 
@@ -136,25 +134,41 @@ def audit_file_claude(file_content, relevant_knowledge):
     Returns:
     dict: The parsed JSON response from the Claude model, or an error dictionary if parsing fails.
     """
-    api_key = get_required_env_var("ANTHROPIC_API_KEY")
-    anthropic_client = anthropic.Anthropic(api_key=api_key)
-    message = anthropic_client.messages.create(
-        model="claude-3-5-sonnet-20240620",
-        max_tokens=4096,
-        temperature=0,
-        system=prompt_older_model,
-        messages=[
-            {
-                "role": "user",
-                "content": f"Relevant knowledge:\n{relevant_knowledge}\n\nFile content:\n{file_content}",
-            },
-        ],
-    )
 
     try:
-        return json.loads(message.content[0].text)
-    except json.JSONDecodeError:
-        return {"error": "Invalid JSON response from Claude model"}
+        api_key = get_required_env_var("ANTHROPIC_API_KEY")
+
+        llm = ChatAnthropic(
+            api_key=api_key, model="claude-3-5-sonnet-latest", temperature=0
+        ).with_structured_output(AuditResponse)
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", prompt_4o),
+                (
+                    "user",
+                    "Relevant knowledge:\n{knowledge}\n\nFile content:\n{content}",
+                ),
+            ]
+        )
+
+        # Use pipe operator for cleaner chain composition
+        chain = prompt | llm
+        output = chain.invoke(
+            {"knowledge": relevant_knowledge, "content": file_content}
+        )
+
+        logging.info("Successfully completed audit")
+        logging.debug(f"Audit response: {output}")
+
+        return output
+
+    except ValueError as e:
+        logging.error(f"Configuration error: {str(e)}")
+        raise
+    except Exception as e:
+        logging.error(f"Error during audit: {str(e)}")
+        raise
 
 
 def audit_file_near_ecosystem(file_content, relevant_knowledge):
