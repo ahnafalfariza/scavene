@@ -70,7 +70,7 @@ def audit_file_with_knowledge(file_content, model, retriever):
     if model == "gpt-4o":
         return audit_file_openai(file_content, relevant_knowledge)
     elif model == "gpt-3.5-turbo":
-        return audit_file_old_model(file_content, relevant_knowledge)
+        return audit_file_openai(file_content, relevant_knowledge, "gpt-3.5-turbo")
     elif model == "claude-3.5-sonnet":
         return audit_file_claude(file_content, relevant_knowledge)
     # elif model == "near-fine-tuned-4o":
@@ -124,36 +124,6 @@ def audit_file_openai(file_content, relevant_knowledge, model="gpt-4o"):
     except Exception as e:
         logging.error(f"Error during audit: {str(e)}")
         raise
-
-
-def audit_file_old_model(file_content, relevant_knowledge, model="gpt-3.5-turbo"):
-    """
-    Audit a file using an older GPT model.
-
-    Args:
-    file_content (str): The content of the file to be audited.
-    model (str): The model to use for auditing (default: "gpt-3.5-turbo").
-
-    Returns:
-    dict: The parsed JSON response from the model, or an error dictionary if parsing fails.
-    """
-    api_key = get_required_env_var("OPENAI_API_KEY")
-    openai_client = OpenAI(api_key=api_key)
-    chat_completion = openai_client.chat.completions.create(
-        messages=[
-            {"role": "system", "content": prompt_older_model},
-            {
-                "role": "user",
-                "content": f"Relevant knowledge:\n{relevant_knowledge}\n\nFile content:\n{file_content}",
-            },
-        ],
-        model=model,
-        response_format={"type": "json_object"},
-    )
-    try:
-        return json.loads(chat_completion.choices[0].message.content)
-    except json.JSONDecodeError:
-        return {"error": "Invalid JSON response from GPT-3.5 Turbo model"}
 
 
 def audit_file_claude(file_content, relevant_knowledge):
