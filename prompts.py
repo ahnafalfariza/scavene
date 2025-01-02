@@ -1,5 +1,5 @@
 # Purpose: Contains the prompts for the different models
-prompt_4o = """
+prompt_default = """
 Please audit the following Rust file and provide feedback on its security and vulnerability. Carefully examine the code and identify any potential security vulnerabilities or issues. 
 Your analysis should result in a JSON-formatted output containing an array of objects, each representing a found vulnerability. 
 Each object should have the following properties:

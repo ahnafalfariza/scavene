@@ -5,7 +5,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 
 from audit_response import AuditResponse
-from prompts import prompt_4o, prompt_ollama
+from prompts import prompt_default, prompt_ollama
 from utils import get_required_env_var
 
 
@@ -46,7 +46,7 @@ def get_relevant_knowledge(query, retriever):
     return relevant_knowledge
 
 
-def audit_file_with_knowledge(file_content, model, retriever):
+def audit_file_with_knowledge(file_content, provider, model, retriever):
     """
     Audit a file using the specified model and external knowledge.
 
@@ -66,19 +66,15 @@ def audit_file_with_knowledge(file_content, model, retriever):
     relevant_knowledge = get_relevant_knowledge(query, retriever)
     logging.debug(f"Retrieved relevant knowledge: {len(relevant_knowledge)} characters")
 
-    if model == "gpt-4o":
-        return audit_file_openai(file_content, relevant_knowledge)
-    elif model == "gpt-3.5-turbo":
-        return audit_file_openai(file_content, relevant_knowledge, "gpt-3.5-turbo")
-    elif model == "claude-3.5-sonnet":
-        return audit_file_claude(file_content, relevant_knowledge)
-    elif model == "llama3.2:3b":
-        return audit_file_ollama(file_content, relevant_knowledge)
-    # elif model == "near-fine-tuned-4o":
-    #     return audit_file_near_ecosystem(file_content, relevant_knowledge)
+    if provider == "openai":
+        return audit_file_openai(file_content, relevant_knowledge, model)
+    elif provider == "anthropic":
+        return audit_file_anthropic(file_content, relevant_knowledge, model)
+    elif provider == "ollama":
+        return audit_file_ollama(file_content, relevant_knowledge, model)
     else:
-        logging.error(f"Invalid model specified: {model}")
-        raise ValueError("Invalid model specified.")
+        logging.error(f"Invalid provider specified: {provider}")
+        raise ValueError("Invalid provider specified.")
 
 
 def audit_file_openai(file_content, relevant_knowledge, model="gpt-4o"):
@@ -100,7 +96,7 @@ def audit_file_openai(file_content, relevant_knowledge, model="gpt-4o"):
 
         prompt = ChatPromptTemplate.from_messages(
             [
-                ("system", prompt_4o),
+                ("system", prompt_default),
                 (
                     "user",
                     "Relevant knowledge:\n{knowledge}\n\nFile content:\n{content}",
@@ -172,7 +168,9 @@ def audit_file_ollama(file_content, relevant_knowledge, model="llama3.2:3b"):
         raise
 
 
-def audit_file_claude(file_content, relevant_knowledge):
+def audit_file_anthropic(
+    file_content, relevant_knowledge, model="claude-3-5-sonnet-latest"
+):
     """
     Audit a file using the Claude 3.5 Sonnet model.
 
@@ -185,14 +183,13 @@ def audit_file_claude(file_content, relevant_knowledge):
 
     try:
         api_key = get_required_env_var("ANTHROPIC_API_KEY")
-
         llm = ChatAnthropic(
-            api_key=api_key, model="claude-3-5-sonnet-latest", temperature=0
+            api_key=api_key, model=model, temperature=0
         ).with_structured_output(AuditResponse)
 
         prompt = ChatPromptTemplate.from_messages(
             [
-                ("system", prompt_4o),
+                ("system", prompt_default),
                 (
                     "user",
                     "Relevant knowledge:\n{knowledge}\n\nFile content:\n{content}",
@@ -247,7 +244,7 @@ def audit_file_near_ecosystem(file_content, relevant_knowledge):
     #     return {"error": "Invalid JSON response from Near Ecosystem model"}
 
 
-def audit(files_content, model="gpt-4o", retriever=None):
+def audit(files_content, provider="openai", model="gpt-4o", retriever=None):
     """
     Audit multiple files using the specified model and external knowledge.
 
@@ -273,7 +270,7 @@ def audit(files_content, model="gpt-4o", retriever=None):
     audit_result = []
     for filepath, content in files_content.items():
         logging.info(f"Auditing file: {filepath}")
-        chat_completion = audit_file_with_knowledge(content, model, retriever)
+        chat_completion = audit_file_with_knowledge(content, provider, model, retriever)
 
         if (
             isinstance(chat_completion, dict)
