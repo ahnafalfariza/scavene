@@ -153,8 +153,6 @@ def audit_file_ollama(file_content, relevant_knowledge, model="llama3.2:3b"):
             ]
         )
 
-        logging.info("prompt", prompt.messages)
-
         # Use pipe operator for cleaner chain composition
         chain = prompt | llm
         output = chain.invoke(
