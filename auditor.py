@@ -2,9 +2,10 @@ import logging
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain.prompts import ChatPromptTemplate
+from langchain_ollama import ChatOllama
 
 from audit_response import AuditResponse
-from prompts import prompt_4o
+from prompts import prompt_4o, prompt_ollama
 from utils import get_required_env_var
 
 
@@ -71,6 +72,8 @@ def audit_file_with_knowledge(file_content, model, retriever):
         return audit_file_openai(file_content, relevant_knowledge, "gpt-3.5-turbo")
     elif model == "claude-3.5-sonnet":
         return audit_file_claude(file_content, relevant_knowledge)
+    elif model == "llama3.2:3b":
+        return audit_file_ollama(file_content, relevant_knowledge)
     # elif model == "near-fine-tuned-4o":
     #     return audit_file_near_ecosystem(file_content, relevant_knowledge)
     else:
@@ -104,6 +107,53 @@ def audit_file_openai(file_content, relevant_knowledge, model="gpt-4o"):
                 ),
             ]
         )
+
+        # Use pipe operator for cleaner chain composition
+        chain = prompt | llm
+        output = chain.invoke(
+            {"knowledge": relevant_knowledge, "content": file_content}
+        )
+
+        logging.info("Successfully completed audit")
+        logging.debug(f"Audit response: {output}")
+
+        return output
+
+    except ValueError as e:
+        logging.error(f"Configuration error: {str(e)}")
+        raise
+    except Exception as e:
+        logging.error(f"Error during audit: {str(e)}")
+        raise
+
+
+def audit_file_ollama(file_content, relevant_knowledge, model="llama3.2:3b"):
+    """
+    Audit a file using the OpenAI model.
+
+    Args:
+    file_content (str): The content of the file to be audited.
+
+    Returns:
+    AuditResponse: The parsed audit response from the GPT-4o model.
+    """
+    try:
+
+        llm = ChatOllama(model=model, temperature=0).with_structured_output(
+            AuditResponse
+        )
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", prompt_ollama),
+                (
+                    "user",
+                    "Relevant knowledge:\n{knowledge}\n\nFile content:\n{content}",
+                ),
+            ]
+        )
+
+        logging.info("prompt", prompt.messages)
 
         # Use pipe operator for cleaner chain composition
         chain = prompt | llm

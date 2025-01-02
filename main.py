@@ -29,7 +29,7 @@ def main():
     )
     parser.add_argument(
         "--model",
-        choices=["gpt-4o", "gpt-3.5-turbo", "claude-3.5-sonnet"],
+        choices=["gpt-4o", "gpt-3.5-turbo", "claude-3.5-sonnet", "llama3.2:3b"],
         default="gpt-4o",
         help="Choose the model to use for auditing (default: gpt-4o)",
     )
