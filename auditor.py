@@ -71,8 +71,8 @@ def audit_file_with_knowledge(file_content, provider, model, retriever):
     elif provider == "ollama":
         return audit_file_ollama(file_content, relevant_knowledge, model)
     else:
-        logging.error(f"Invalid provider specified: {provider}")
-        raise ValueError("Invalid provider specified.")
+        logging.error(f"Invalid or unsupported provider specified: {provider}")
+        raise ValueError("Invalid or unsupported provider specified.")
 
 
 def audit_file_openai(file_content, relevant_knowledge, model="gpt-4o"):
