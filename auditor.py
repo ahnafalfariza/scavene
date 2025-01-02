@@ -58,9 +58,7 @@ def audit_file_with_knowledge(file_content, provider, model, retriever):
     Returns:
     dict or AuditResponse: The parsed audit response from the model.
     """
-    query = (
-        f"Audit this Rust code for security vulnerabilities: {file_content[:500]}..."
-    )
+    query = f"Audit this Rust code for security vulnerabilities:\n\n {file_content}"
     logging.debug(f"Generated query for knowledge retrieval: {query[:100]}...")
 
     relevant_knowledge = get_relevant_knowledge(query, retriever)
