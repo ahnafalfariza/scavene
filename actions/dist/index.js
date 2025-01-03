@@ -38725,12 +38725,14 @@ async function main() {
     },
   }
 
+  const provider = core.getInput('provider')
   const model = core.getInput('model')
   const outputFile = core.getInput('output_file')
   const folderPath = core.getInput('folder_path')
 
   const args = []
   if (folderPath) args.push(folderPath)
+  if (provider) args.push(`--provider ${provider}`)
   if (model) args.push(`--model ${model}`)
   if (outputFile) args.push(`--output ${outputFile}`)
 

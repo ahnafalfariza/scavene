@@ -6,6 +6,10 @@ inputs:
     description: "Path to the folder containing Rust files to audit"
     required: false
     default: ""
+  provider:
+    description: "Provider to use for auditing (openai or anthropic)"
+    required: false
+    default: "openai"
   model:
     description: "Model to use for auditing (gpt-4o, gpt-3.5-turbo, or claude-3.5-sonnet)"
     required: false

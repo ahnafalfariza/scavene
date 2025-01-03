@@ -7,6 +7,10 @@ inputs:
     description: "Path to the folder containing Rust files to audit"
     required: false
     default: ""
+  provider:
+    description: "Provider to use for auditing (openai or anthropic)"
+    required: false
+    default: "openai"
   model:
     description: "Model to use for auditing (gpt-4o, gpt-3.5-turbo, or claude-3.5-sonnet)"
     required: false
@@ -58,6 +62,7 @@ runs:
         ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
       with:
         folder_path: ${{ inputs.folder_path }}
+        provider: ${{ inputs.provider }}
         model: ${{ inputs.model }}
         output_file: ${{ inputs.output_file }}
         openai_api_key: ${{ inputs.openai_api_key }}
