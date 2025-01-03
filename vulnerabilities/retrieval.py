@@ -2,6 +2,7 @@ import csv
 from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from utils import get_required_env_var
 
 
@@ -64,19 +65,27 @@ def load_vulnerabilities(file_path):
         raise Exception(f"Error loading vulnerability data: {str(e)}")
 
 
-def initialize_retriever():
+def initialize_retriever(provider="openai"):
     """
     Initialize and return a VectorStoreRetriever for the external knowledge base.
 
+    Args:
+        provider (str): The embedding provider to use ('openai' or 'ollama')
+
     Returns:
-    VectorStoreRetriever: The initialized retriever object.
+        VectorStoreRetriever: The initialized retriever object.
     """
     # Load vulnerabilities from CSV
     documents = load_vulnerabilities("vulnerabilities/list_vulnerabilities.csv")
 
-    api_key = get_required_env_var("OPENAI_API_KEY")
-    # Initialize embeddings
-    embeddings = OpenAIEmbeddings(api_key=api_key)
+    # Initialize embeddings based on provider
+    if provider == "openai":
+        api_key = get_required_env_var("OPENAI_API_KEY")
+        embeddings = OpenAIEmbeddings(api_key=api_key)
+    elif provider == "ollama":
+        embeddings = OllamaEmbeddings(model="llama2")
+    else:
+        raise ValueError(f"Unsupported embedding provider: {provider}")
 
     # Create the vector store
     vector_store = FAISS.from_documents(documents, embeddings)
