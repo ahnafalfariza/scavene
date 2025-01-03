@@ -39,6 +39,12 @@ def main():
         help="Choose the model from the provider to use for auditing. Eg. gpt-4o, gpt-3.5-turbo, etc",
     )
     parser.add_argument(
+        "--retrieval-provider",
+        choices=["openai", "ollama"],
+        default="openai",
+        help="Choose the provider for embeddings (default: openai)",
+    )
+    parser.add_argument(
         "--output",
         default=f"audit_results_{int(time.time())}",
         help="Output file name for audit results without extension (default: audit_results_<timestamp>)",
@@ -72,8 +78,8 @@ def main():
         logging.info(f"File to audit: {file_name}")
     logging.info("Starting audit process")
 
-    logging.info("Initializing retriever for external knowledge base")
-    retriever = initialize_retriever()
+    logging.info(f"Initializing retriever with provider: {args.retrieval_provider}")
+    retriever = initialize_retriever(args.retrieval_provider)
 
     logging.info("Starting audit")
     audit_result = audit(files_content, args.provider, args.model, retriever)
