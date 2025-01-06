@@ -3,6 +3,7 @@ from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 
 from audit_response import AuditResponse
 from prompts import prompt_default, prompt_ollama
@@ -71,9 +72,71 @@ def audit_file_with_knowledge(file_content, provider, model, retriever):
         return audit_file_anthropic(file_content, relevant_knowledge, model)
     elif provider == "ollama":
         return audit_file_ollama(file_content, relevant_knowledge, model)
+    elif provider == "huggingface":
+        return audit_file_huggingface(file_content, relevant_knowledge, model)
     else:
         logging.error(f"Invalid or unsupported provider specified: {provider}")
         raise ValueError("Invalid or unsupported provider specified.")
+
+
+def audit_file_huggingface(
+    file_content, relevant_knowledge, model="microsoft/Phi-3-mini-4k-instruct"
+):
+    """
+    Audit a file using the model from Hugging Face.
+
+    Args:
+    file_content (str): The content of the file to be audited.
+    relevant_knowledge (str): Relevant knowledge for the audit.
+    model (str): The Hugging Face model ID to use.
+
+    Returns:
+    dict: The parsed JSON response from the model, or an error dictionary if parsing fails.
+    """
+    # NOTE: This function is currently not functional as ChatHuggingFace does not support
+    # the with_structured_output method in the current version of langchain.
+    # TODO: Implement alternative structured output handling or wait for library update
+
+    try:
+        get_required_env_var("HUGGINGFACEHUB_API_TOKEN")
+
+        llm = HuggingFaceEndpoint(
+            repo_id=model,
+            task="text-generation",
+            max_new_tokens=4096,
+            do_sample=False,
+            repetition_penalty=1.03,
+        )
+
+        chat_model = ChatHuggingFace(llm=llm).with_structured_output(AuditResponse)
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", prompt_default),
+                (
+                    "user",
+                    "Relevant knowledge:\n{knowledge}\n\nFile content:\n{content}",
+                ),
+            ]
+        )
+
+        # Use pipe operator for cleaner chain composition
+        chain = prompt | chat_model
+        output = chain.invoke(
+            {"knowledge": relevant_knowledge, "content": file_content}
+        )
+
+        logging.info("Successfully completed audit")
+        logging.debug(f"Audit response: {output}")
+
+        return output
+
+    except ValueError as e:
+        logging.error(f"Configuration error: {str(e)}")
+        raise
+    except Exception as e:
+        logging.error(f"Error during audit: {str(e)}")
+        raise
 
 
 def audit_file_openai(file_content, relevant_knowledge, model="gpt-4o"):

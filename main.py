@@ -32,7 +32,7 @@ def main():
     )
     parser.add_argument(
         "--provider",
-        choices=["openai", "anthropic", "ollama"],
+        choices=["openai", "anthropic", "ollama", "huggingface"],
         help="Choose the provider for the model. Eg. openai, anthropic, ollama",
         required=True,
     )
