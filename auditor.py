@@ -52,6 +52,7 @@ def audit_file_with_knowledge(file_content, provider, model, retriever):
 
     Args:
     file_content (str): The content of the file to be audited.
+    provider (str): The provider to use for the model.
     model (str): The model to use for auditing.
     retriever (VectorStoreRetriever): The retriever object for the knowledge base.
 
@@ -81,6 +82,8 @@ def audit_file_openai(file_content, relevant_knowledge, model="gpt-4o"):
 
     Args:
     file_content (str): The content of the file to be audited.
+    relevant_knowledge (str): Relevant knowledge for the audit.
+    model (str): The OpenAI model ID to use.
 
     Returns:
     AuditResponse: The parsed audit response from the GPT-4o model.
@@ -127,6 +130,8 @@ def audit_file_ollama(file_content, relevant_knowledge, model="llama3.2:3b"):
 
     Args:
     file_content (str): The content of the file to be audited.
+    relevant_knowledge (str): Relevant knowledge for the audit.
+    model (str): The OpenAI model ID to use.
 
     Returns:
     AuditResponse: The parsed audit response from the GPT-4o model.
@@ -174,6 +179,8 @@ def audit_file_anthropic(
 
     Args:
     file_content (str): The content of the file to be audited.
+    relevant_knowledge (str): Relevant knowledge for the audit.
+    model (str): The Claude model ID to use.
 
     Returns:
     dict: The parsed JSON response from the Claude model, or an error dictionary if parsing fails.
@@ -248,6 +255,7 @@ def audit(files_content, provider="openai", model="gpt-4o", retriever=None):
 
     Args:
     files_content (dict): A dictionary where keys are file paths and values are file contents.
+    provider (str): The provider to use for the model (default: "openai").
     model (str): The model to use for auditing (default: "gpt-4o").
     retriever (VectorStoreRetriever): The retriever object for the knowledge base.
 
