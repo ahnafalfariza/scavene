@@ -2,12 +2,15 @@ import argparse
 import time
 import json
 import logging
+from dotenv import load_dotenv
 
 from auditor import audit
 from file_reader import read_files_in_folder
 from utils import save_results_to_file
 from vulnerabilities.retrieval import initialize_retriever
 from logging_config import setup_logging
+
+load_dotenv()
 
 
 def main():
