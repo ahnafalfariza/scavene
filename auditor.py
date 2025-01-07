@@ -93,6 +93,10 @@ def audit_file_huggingface(
     Returns:
     dict: The parsed JSON response from the model, or an error dictionary if parsing fails.
     """
+    logging.warning(
+        "HuggingFace integration is not yet functional due to missing structured output support"
+    )
+
     # NOTE: This function is currently not functional as ChatHuggingFace does not support
     # the with_structured_output method in the current version of langchain.
     # TODO: Implement alternative structured output handling or wait for library update
