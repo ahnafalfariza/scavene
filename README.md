@@ -154,13 +154,23 @@ python main.py --provider ollama --model llama3.2:3b --retrieval-provider ollama
 The audit results will be saved in the `audit_results` directory.
 
 ## Configuration
+### API Keys
 
-The tool uses environment variables for configuration:
+For remote providers, you'll need to set up API keys:
+- OpenAI: Required when using `--provider openai`
+- Anthropic: Required when using `--provider anthropic`
+- Hugging Face: Required when using `--provider huggingface`
 
-- `OPENAI_API_KEY`: Your OpenAI API key (required for OpenAI models)
-- `ANTHROPIC_API_KEY`: Your Anthropic API key (required for Claude model)
+Local providers:
+- Ollama: No API key required, but needs the Ollama environment set up locally
+- Hugging Face: Requires `HUGGINGFACEHUB_API_TOKEN` for authentication and local model setup
 
-You can set this in your shell or use a `.env` file (make sure to add `.env` to your `.gitignore`).
+You can set up your API keys in your environment or .env file:
+```sh
+OPENAI_API_KEY='your-openai-api-key'
+ANTHROPIC_API_KEY='your-anthropic-api-key'
+HUGGINGFACEHUB_API_TOKEN='your-huggingface-token'
+```
 
 
 ## Audit Process
