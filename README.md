@@ -12,6 +12,7 @@ Scavene is an advanced tool designed to automatically audit Rust-based smart con
       - [Installation](#installation)
       - [Usage Guide](#usage-guide)
       - [Configuration](#configuration)
+   3. [Documentation](#3-documentation)
 3. [Audit Process](#audit-process)
 4. [License](#license)
 5. [Contributing](#contributing)
@@ -50,7 +51,7 @@ jobs:
           openai_api_key: '${{ secrets.OPENAI_API_KEY }}'
           anthropic_api_key: '${{ secrets.ANTHROPIC_API_KEY }}'
           provider: anthropic
-          model: claude-3.5-sonnet
+          model: claude-3-5-sonnet-latest
           myToken: '${{ secrets.GITHUB_TOKEN }}'
 ```
 
@@ -172,6 +173,11 @@ ANTHROPIC_API_KEY='your-anthropic-api-key'
 HUGGINGFACEHUB_API_TOKEN='your-huggingface-token'
 ```
 
+## 3. Documentation
+For more detailed information, please refer to:
+- [Features Documentation](docs/FEATURES.md)
+- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+- [Output Format](docs/OUTPUT_FORMAT.md)
 
 ## Audit Process
 
