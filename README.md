@@ -178,6 +178,7 @@ For more detailed information, please refer to:
 - [Features Documentation](docs/FEATURES.md)
 - [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
 - [Output Format](docs/OUTPUT_FORMAT.md)
+- [Roadmap](docs/ROADMAP.md)
 
 ## Audit Process
 
