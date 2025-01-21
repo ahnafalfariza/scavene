@@ -11,6 +11,5 @@
 - Support for other blockchain platforms
 
 ### Long term Goals (2025)
-- Multi-chain support
 - Enterprise features
 - Advanced analysis capabilities
