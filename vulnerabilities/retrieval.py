@@ -2,6 +2,7 @@ import csv
 from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from utils import get_required_env_var
 
 
@@ -23,31 +24,68 @@ def load_vulnerabilities(file_path):
     - page_content: A formatted string with vulnerability details (title, description, severity, etc.)
     - metadata: A dictionary with the 'source' key set to the detector ID
     """
-    documents = []
-    with open(file_path, newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            content = f"Title: {row['title']}\nDescription: {row['description']}\nSeverity: {row['severity']}\nDetector ID: {row['detector_id']}\nSample Code:\n{row['sample_code']}"
-            doc = Document(
-                page_content=content, metadata={"source": row["detector_id"]}
-            )
-            documents.append(doc)
-    return documents
+    try:
+        documents = []
+        with open(file_path, newline="", encoding="utf-8") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                # Validate required fields exist
+                required_fields = [
+                    "title",
+                    "description",
+                    "severity",
+                    "detector_id",
+                    "sample_code",
+                ]
+                if not all(field in row for field in required_fields):
+                    raise KeyError(f"Missing required fields in CSV row: {row}")
+
+                # Format content with clear section separation
+                content = (
+                    f"Title: {row['title']}\n"
+                    f"Description: {row['description']}\n"
+                    f"Severity: {row['severity']}\n"
+                    f"Detector ID: {row['detector_id']}\n"
+                    f"Sample Code:\n{row['sample_code'].strip()}"
+                )
+
+                doc = Document(
+                    page_content=content,
+                    metadata={
+                        "source": row["detector_id"],
+                        "severity": row["severity"],
+                        "title": row["title"],
+                    },
+                )
+                documents.append(doc)
+        return documents
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Vulnerability data file not found: {file_path}")
+    except Exception as e:
+        raise Exception(f"Error loading vulnerability data: {str(e)}")
 
 
-def initialize_retriever():
+def initialize_retriever(provider="openai"):
     """
     Initialize and return a VectorStoreRetriever for the external knowledge base.
 
+    Args:
+        provider (str): The embedding provider to use ('openai' or 'ollama')
+
     Returns:
-    VectorStoreRetriever: The initialized retriever object.
+        VectorStoreRetriever: The initialized retriever object.
     """
     # Load vulnerabilities from CSV
     documents = load_vulnerabilities("vulnerabilities/list_vulnerabilities.csv")
 
-    api_key = get_required_env_var("OPENAI_API_KEY")
-    # Initialize embeddings
-    embeddings = OpenAIEmbeddings(api_key=api_key)
+    # Initialize embeddings based on provider
+    if provider == "openai":
+        api_key = get_required_env_var("OPENAI_API_KEY")
+        embeddings = OpenAIEmbeddings(api_key=api_key)
+    elif provider == "ollama":
+        embeddings = OllamaEmbeddings(model="llama2")
+    else:
+        raise ValueError(f"Unsupported embedding provider: {provider}")
 
     # Create the vector store
     vector_store = FAISS.from_documents(documents, embeddings)

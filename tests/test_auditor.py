@@ -6,21 +6,25 @@ from auditor import audit_file_with_knowledge, audit
 class TestAuditor(unittest.TestCase):
 
     @patch("auditor.get_relevant_knowledge")
-    @patch("auditor.audit_file_4o")
+    @patch("auditor.audit_file_openai")
     def test_audit_file_with_knowledge_gpt4o(
-        self, mock_audit_file_4o, mock_get_relevant_knowledge
+        self, mock_audit_file_openai, mock_get_relevant_knowledge
     ):
         mock_get_relevant_knowledge.return_value = "Relevant knowledge"
-        mock_audit_file_4o.return_value = {"vulnerabilities": ["test vulnerability"]}
+        mock_audit_file_openai.return_value = {
+            "vulnerabilities": ["test vulnerability"]
+        }
 
         result = audit_file_with_knowledge("test content", "gpt-4o", MagicMock())
 
         mock_get_relevant_knowledge.assert_called_once()
-        mock_audit_file_4o.assert_called_once_with("test content", "Relevant knowledge")
+        mock_audit_file_openai.assert_called_once_with(
+            "test content", "Relevant knowledge"
+        )
         self.assertEqual(result, {"vulnerabilities": ["test vulnerability"]})
 
     @patch("auditor.get_relevant_knowledge")
-    @patch("auditor.audit_file_old_model")
+    @patch("auditor.audit_file_openai")
     def test_audit_file_with_knowledge_gpt35(
         self, mock_audit_file_old_model, mock_get_relevant_knowledge
     ):
@@ -33,7 +37,7 @@ class TestAuditor(unittest.TestCase):
 
         mock_get_relevant_knowledge.assert_called_once()
         mock_audit_file_old_model.assert_called_once_with(
-            "test content", "Relevant knowledge"
+            "test content", "Relevant knowledge", "gpt-3.5-turbo"
         )
         self.assertEqual(result, {"vulnerabilities": ["test vulnerability"]})
 

@@ -12,6 +12,7 @@ Scavene is an advanced tool designed to automatically audit Rust-based smart con
       - [Installation](#installation)
       - [Usage Guide](#usage-guide)
       - [Configuration](#configuration)
+   3. [Documentation](#3-documentation)
 3. [Audit Process](#audit-process)
 4. [License](#license)
 5. [Contributing](#contributing)
@@ -49,7 +50,8 @@ jobs:
         with:
           openai_api_key: '${{ secrets.OPENAI_API_KEY }}'
           anthropic_api_key: '${{ secrets.ANTHROPIC_API_KEY }}'
-          model: claude-3.5-sonnet
+          provider: anthropic
+          model: claude-3-5-sonnet-latest
           myToken: '${{ secrets.GITHUB_TOKEN }}'
 ```
 
@@ -106,40 +108,77 @@ _Screenshot result on Pull Request and on the action terminal_
 To use the Scavene, run the `main.py` script with the following syntax:
 
 ```sh
-python main.py <folder_path> [--model MODEL] [--output OUTPUT_FILE] [--format FORMAT] [--log-level LOG_LEVEL] [--no-log]
+python main.py [folder_path] --provider PROVIDER --model MODEL [additional options]
 ```
 
-- `<folder_path>`: Path to the folder containing Rust files to audit, if not exist it will scan current directory
-- `--model`: Choose the model to use for auditing (optional, default: gpt-4o)
-   - Options: gpt-4o, gpt-3.5-turbo, claude-3.5-sonnet
-- `--output`: Output file name for audit results (optional, default: audit_results_<timestamp>.json)
-- `--format`: Specifies the output format for the audit results. (optional)
-   - Options: json, csv
-- `--log-level`: Set the logging level (optional, default: INFO)
-   - Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
-- `--no-log`: Disable all logging (optional)
+### Model Providers
+Scavene supports both remote (cloud-based) and local model providers:
 
-Example:
-```sh
-python main.py /path/to/your/rust/files --model claude-3.5-sonnet --log-level DEBUG
-```
+Remote Providers:
+- `openai`: OpenAI's models (requires API key)
+- `anthropic`: Anthropic's Claude models (requires API key)
 
-To run the audit without any logging:
+Local Providers:
+- `ollama`: Run models locally using Ollama
+- `huggingface`: Use local Hugging Face models
+
+### Arguments
+Required arguments:
+- `--provider`: Choose the provider for the model
+  - Options: openai, anthropic, ollama, huggingface
+- `--model`: Specify the model to use from the chosen provider
+  - Examples: gpt-4o, claude-3.5-sonnet-latest, llama3.2:3b
+
+Optional arguments:
+- `folder_path`: Path to the folder containing Rust files to audit (default: current directory)
+- `--retrieval-provider`: Choose the provider for embeddings (default: openai)
+  - Options: openai, ollama
+- `--output`: Output file name for audit results without extension (default: audit_results_<timestamp>)
+- `--format`: Specifies the output format (default: json)
+  - Options: json, csv
+- `--log-level`: Set the logging level (default: INFO)
+  - Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- `--no-log`: Disable all logging
+
+Examples:
 ```sh
-python main.py /path/to/your/rust/files --model gpt-4o --no-log
+# Audit current directory using Claude
+python main.py --provider anthropic --model claude-3.5-sonnet-latest
+
+# Audit specific folder using GPT-4
+python main.py /path/to/your/rust/files --provider openai --model gpt-4o --log-level DEBUG
+
+# Use Ollama for both model and embeddings
+python main.py --provider ollama --model llama3.2:3b --retrieval-provider ollama
 ```
 
 The audit results will be saved in the `audit_results` directory.
 
 ## Configuration
+### API Keys
 
-The tool uses environment variables for configuration:
+For remote providers, you'll need to set up API keys:
+- OpenAI: Required when using `--provider openai`
+- Anthropic: Required when using `--provider anthropic`
+- Hugging Face: Required when using `--provider huggingface`
 
-- `OPENAI_API_KEY`: Your OpenAI API key (required for OpenAI models)
-- `ANTHROPIC_API_KEY`: Your Anthropic API key (required for Claude model)
+Local providers:
+- Ollama: No API key required, but needs the Ollama environment set up locally
+- Hugging Face: Requires `HUGGINGFACEHUB_API_TOKEN` for authentication and local model setup
 
-You can set this in your shell or use a `.env` file (make sure to add `.env` to your `.gitignore`).
+You can set up your API keys in your environment or .env file:
+```sh
+OPENAI_API_KEY='your-openai-api-key'
+ANTHROPIC_API_KEY='your-anthropic-api-key'
+HUGGINGFACEHUB_API_TOKEN='your-huggingface-token'
+```
 
+## 3. Documentation
+For more detailed information, please refer to:
+- [Features Documentation](docs/FEATURES.md)
+- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+- [Output Format](docs/OUTPUT_FORMAT.md)
+- [Roadmap](docs/ROADMAP.md)
 
 ## Audit Process
 

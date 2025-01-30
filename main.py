@@ -2,12 +2,15 @@ import argparse
 import time
 import json
 import logging
+from dotenv import load_dotenv
 
 from auditor import audit
 from file_reader import read_files_in_folder
 from utils import save_results_to_file
 from vulnerabilities.retrieval import initialize_retriever
 from logging_config import setup_logging
+
+load_dotenv()
 
 
 def main():
@@ -28,10 +31,21 @@ def main():
         help="Path to the folder containing Rust files to audit (default: current directory)",
     )
     parser.add_argument(
+        "--provider",
+        choices=["openai", "anthropic", "ollama", "huggingface"],
+        help="Choose the provider for the model. Eg. openai, anthropic, ollama",
+        required=True,
+    )
+    parser.add_argument(
         "--model",
-        choices=["gpt-4o", "gpt-3.5-turbo", "claude-3.5-sonnet"],
-        default="gpt-4o",
-        help="Choose the model to use for auditing (default: gpt-4o)",
+        required=True,
+        help="Choose the model from the provider to use for auditing. Eg. gpt-4o, gpt-3.5-turbo, etc",
+    )
+    parser.add_argument(
+        "--retrieval-provider",
+        choices=["openai", "ollama"],
+        default="openai",
+        help="Choose the provider for embeddings (default: openai)",
     )
     parser.add_argument(
         "--output",
@@ -56,19 +70,22 @@ def main():
 
     setup_logging(args.log_level, args.no_log)
 
-    logging.info(f"Starting audit process with model: {args.model}")
+    logging.info(
+        f"Starting audit process with provider: {args.provider} and model: {args.model}"
+    )
     logging.info(f"Reading files from folder: {args.folder_path}")
+
     files_content = read_files_in_folder(args.folder_path)
     logging.info(f"Found {len(files_content)} Rust files to audit")
     for file_name in files_content.keys():
         logging.info(f"File to audit: {file_name}")
     logging.info("Starting audit process")
 
-    logging.info("Initializing retriever for external knowledge base")
-    retriever = initialize_retriever()
+    logging.info(f"Initializing retriever with provider: {args.retrieval_provider}")
+    retriever = initialize_retriever(args.retrieval_provider)
 
     logging.info("Starting audit")
-    audit_result = audit(files_content, args.model, retriever)
+    audit_result = audit(files_content, args.provider, args.model, retriever)
 
     output_file = f"{args.output}.{args.format}"
     logging.info(f"Saving audit results to {output_file}")
