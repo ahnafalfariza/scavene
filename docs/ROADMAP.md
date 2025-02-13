@@ -11,5 +11,6 @@
 - Support for other blockchain platforms
 
 ### Long term Goals (2025)
+- Monitoring and analytics
 - Enterprise features
 - Advanced analysis capabilities
